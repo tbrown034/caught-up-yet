@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A new project based on my work with watch-lock, with a new brand identify and a clean start after successes/pitfall with v1 of the project.
 
-## Getting Started
+Core Goal
 
-First, run the development server:
+Enable families to share real-time reactions to sports games
+even when watching at different times, without spoiling each
+other.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The Problem You're Solving
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Your family can't text about a game when some people are
+watching live and others are 20 minutes behind on DVR. Right
+now the choice is:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Stay silent until everyone finishes (kills the fun of shared
+  experience)
+- Text anyway and accidentally spoil big moments (ruins the
+  game for people behind)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+User Stories
 
-## Learn More
+The Live Watcher (Dad)
 
-To learn more about Next.js, take a look at the following resources:
+"I'm watching the Cubs game live. Bottom of the 9th, bases
+loaded—I want to freak out to my family RIGHT NOW, but my son
+is watching on delay. I want to share my reaction without
+spoiling what's about to happen for him."
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The Delayed Watcher (You)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+"I'm watching the same game but 30 minutes behind. I want to
+see my dad's reactions to the moments I'VE already seen, so I
+feel like we're watching together. But I don't want to see his
+messages about what happens next."
 
-## Deploy on Vercel
+The Postgame Catch-Up (Anyone)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+"The game ended hours ago, but I'm finally watching the replay.
+I want to scroll through everyone's reactions as if I was
+there with them, experiencing the game chronologically without
+jumping ahead."
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+What Success Looks Like
+
+- Small private groups (family, close friends) can create a
+  room for a specific game
+- Everyone updates where they are as they watch (inning,
+  quarter, etc.)
+- Messages flow naturally but only reveal themselves as you
+  reach those moments
+- The experience feels like texting but it's magically
+  spoiler-safe
+- Works for any sport with clear game progression (baseball,
+  football, basketball)
+
+The Emotional Payoff
+
+You get to share the emotional highs and lows of watching
+sports with people you care about, even when life schedules
+don't align. It recreates the "watching together on the couch"
+feeling when that's not physically possible.
+
+---
+
+It is 7:10 p.m. Oct 21 and will be making my first commit soon. But this project was originally started Oct. 8 and has gone though modifications though Oct. 20 via https://github.com/tbrown034/watch-lock. Applying lesson learned, new branding, simplified approach, better use of Supabase (this was my first time using) after other lessons learned better undertanding of docs, including useMemo as well.
+# caught-up-yet
