@@ -1,4 +1,4 @@
-import { IoCheckmarkCircle } from "react-icons/io5";
+import { CheckCircle } from "lucide-react";
 
 interface BrandIconProps {
   size?: number;
@@ -7,7 +7,7 @@ interface BrandIconProps {
 
 export default function BrandIcon({ size = 32, className = "" }: BrandIconProps) {
   return (
-    <IoCheckmarkCircle
+    <CheckCircle
       size={size}
       className={`text-blue-600 ${className}`}
     />

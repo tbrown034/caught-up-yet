@@ -1,5 +1,6 @@
 import { SITE_CONFIG } from "@/constants/site";
 import Button from "@/components/ui/Button";
+import { Target, Zap, Lock, FileText, Cookie, Mail } from "lucide-react";
 
 const sections = [
   { id: "mission", label: "Our Mission" },
@@ -35,7 +36,7 @@ export default function AboutPage() {
 
       <div className="flex gap-8">
         {/* Desktop Sidebar Navigation */}
-        <aside className="hidden lg:block w-64 flex-shrink-0">
+        <aside className="hidden lg:block w-64 shrink-0">
           <nav className="sticky top-20">
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -66,153 +67,183 @@ export default function AboutPage() {
           </div>
 
           <div className="prose prose-lg max-w-none">
-        <section id="mission" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">🎯</span> Our Mission
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Watch games together without the fear of spoilers. {SITE_CONFIG.name}{" "}
-              helps you sync up with friends and family to enjoy sports and events
-              at your own pace, ensuring everyone stays on the same page without
-              ruining the excitement.
-            </p>
-          </div>
-        </section>
-
-        <section id="how-it-works" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">⚡</span> How It Works
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Create a watch party, invite your friends, and everyone can track
-              their progress through the game. No more accidental spoilers in the
-              group chat. No more missing out on shared reactions. Just pure,
-              synchronized enjoyment.
-            </p>
-          </div>
-        </section>
-
-        <section id="privacy" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">🔒</span> Privacy Policy
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Your privacy is important to us. When you use {SITE_CONFIG.name}, we
-              collect and store only the information necessary to provide our
-              service:
-            </p>
-            <ul className="space-y-2 mb-4">
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Account information (email, name) when you sign up via OAuth</span>
-              </li>
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Watch party data and progress tracking</span>
-              </li>
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Basic usage analytics to improve the service</span>
-              </li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              We never sell your data to third parties. Your watch history is
-              private and only shared with members of watch parties you explicitly
-              join.
-            </p>
-          </div>
-        </section>
-
-        <section id="terms" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">📋</span> Terms of Service
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              By using {SITE_CONFIG.name}, you agree to:
-            </p>
-            <ul className="space-y-2 mb-4">
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Use the service for personal, non-commercial purposes</span>
-              </li>
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Not share spoilers outside of the agreed watch party timeline</span>
-              </li>
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Respect other users and maintain a friendly community</span>
-              </li>
-              <li className="flex items-start gap-2 text-gray-700">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Not attempt to abuse, hack, or compromise the service</span>
-              </li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              We reserve the right to suspend accounts that violate these terms.
-            </p>
-          </div>
-        </section>
-
-        <section id="data-cookies" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">🍪</span> Data & Cookies
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              We use cookies and local storage to keep you logged in and remember
-              your preferences. By signing in with OAuth providers (Google, GitHub,
-              etc.), you authorize us to access your basic profile information
-              (name, email) as provided by those services.
-            </p>
-          </div>
-        </section>
-
-        <section id="contact" className="mb-12 scroll-mt-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">✉️</span> Contact
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Questions, feedback, or concerns? Reach out anytime.
-            </p>
-            <div className="space-y-4">
-              <p className="text-gray-700">
-                <span className="font-medium">Email:</span>{" "}
-                <a
-                  href={`mailto:${SITE_CONFIG.email}`}
-                  className="text-blue-600 hover:text-blue-800 underline"
-                >
-                  {SITE_CONFIG.email}
-                </a>
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Built by:</span>{" "}
-                <a
-                  href={SITE_CONFIG.developer.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
-                >
-                  {SITE_CONFIG.developer.name}
-                </a>
-              </p>
-              <div className="flex gap-3 pt-2">
-                <Button variant="primary" size="sm" href={`mailto:${SITE_CONFIG.email}`} asLink>
-                  Send Email
-                </Button>
-                <Button variant="ghost" size="sm" href={SITE_CONFIG.developer.website} asLink>
-                  View Portfolio
-                </Button>
+            <section id="mission" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Target className="text-blue-600" size={24} />
+                  Our Mission
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Watch games together without the fear of spoilers.{" "}
+                  {SITE_CONFIG.name} helps you sync up with friends and family
+                  to enjoy sports and events at your own pace, ensuring everyone
+                  stays on the same page without ruining the excitement.
+                </p>
               </div>
-            </div>
+            </section>
+
+            <section id="how-it-works" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Zap className="text-blue-600" size={24} />
+                  How It Works
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Create a watch party, invite your friends, and everyone can
+                  track their progress through the game. No more accidental
+                  spoilers in the group chat. No more missing out on shared
+                  reactions. Just pure, synchronized enjoyment.
+                </p>
+              </div>
+            </section>
+
+            <section id="privacy" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Lock className="text-blue-600" size={24} />
+                  Privacy Policy
+                </h2>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Your privacy is important to us. When you use{" "}
+                  {SITE_CONFIG.name}, we collect and store only the information
+                  necessary to provide our service:
+                </p>
+                <ul className="space-y-2 mb-4">
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>
+                      Account information (email, name) when you sign up via
+                      OAuth
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Watch party data and progress tracking</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Basic usage analytics to improve the service</span>
+                  </li>
+                </ul>
+                <p className="text-gray-700 leading-relaxed">
+                  We never sell your data to third parties. Your watch history
+                  is private and only shared with members of watch parties you
+                  explicitly join.
+                </p>
+              </div>
+            </section>
+
+            <section id="terms" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="text-blue-600" size={24} />
+                  Terms of Service
+                </h2>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  By using {SITE_CONFIG.name}, you agree to:
+                </p>
+                <ul className="space-y-2 mb-4">
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>
+                      Use the service for personal, non-commercial purposes
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>
+                      Not share spoilers outside of the agreed watch party
+                      timeline
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>
+                      Respect other users and maintain a friendly community
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-gray-700">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>
+                      Not attempt to abuse, hack, or compromise the service
+                    </span>
+                  </li>
+                </ul>
+                <p className="text-gray-700 leading-relaxed">
+                  We reserve the right to suspend accounts that violate these
+                  terms.
+                </p>
+              </div>
+            </section>
+
+            <section id="data-cookies" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Cookie className="text-blue-600" size={24} />
+                  Data & Cookies
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  We use cookies and local storage to keep you logged in and
+                  remember your preferences. By signing in with OAuth providers
+                  (Google, GitHub, etc.), you authorize us to access your basic
+                  profile information (name, email) as provided by those
+                  services.
+                </p>
+              </div>
+            </section>
+
+            <section id="contact" className="mb-12 scroll-mt-20">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Mail className="text-blue-600" size={24} />
+                  Contact
+                </h2>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Questions, feedback, or concerns? Reach out anytime.
+                </p>
+                <div className="space-y-4">
+                  <p className="text-gray-700">
+                    <span className="font-medium">Email:</span>{" "}
+                    <a
+                      href={`mailto:${SITE_CONFIG.email}`}
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      {SITE_CONFIG.email}
+                    </a>
+                  </p>
+                  <p className="text-gray-700">
+                    <span className="font-medium">Built by:</span>{" "}
+                    <a
+                      href={SITE_CONFIG.developer.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      {SITE_CONFIG.developer.name}
+                    </a>
+                  </p>
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      href={`mailto:${SITE_CONFIG.email}`}
+                      asLink
+                    >
+                      Send Email
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      href={SITE_CONFIG.developer.website}
+                      asLink
+                    >
+                      View Portfolio
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
-      </div>
         </div>
       </div>
     </div>
