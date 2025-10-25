@@ -10,11 +10,11 @@ export default function Home() {
         </h2>
       </div>
       <div className="flex gap-4">
-        <Button variant="primary" size="lg" href="/signin" asLink>
+        <Button variant="primary" size="lg" href="/login" asLink>
           Sign In
         </Button>
-        <Button variant="secondary" size="lg" href="/games" asLink>
-          Browse Games
+        <Button variant="secondary" size="lg" href="/dashboard" asLink>
+          Dashboard
         </Button>
       </div>
     </div>

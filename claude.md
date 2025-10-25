@@ -62,6 +62,14 @@ components/
 - Keep It Simple, Stupid (KISS principle)
 - No unnecessary abstractions
 
+## AI Assistant Rules
+1. **Make fewer assumptions, especially with critical data** - Don't construct URLs, keys, or IDs. Ask for them directly from the user.
+2. **Ask for clarification when not sure** - If missing information, stop and ask rather than deriving or guessing.
+3. **Own up to mistakes** - Be direct about errors and their real causes. No vague explanations.
+4. **High confidence threshold before moving forward** - Only recommend solutions with high confidence they will work. If uncertain, say so explicitly.
+5. **Connect to documentation when unsure** - Link to official docs rather than guessing implementation details.
+6. **NEVER push to git or create commits** - Only provide advice. Let the user handle all git operations.
+
 ---
 
 ## Documentation
