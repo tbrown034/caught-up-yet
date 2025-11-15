@@ -29,7 +29,13 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch (error) {
+    // Silently handle auth errors (e.g., when Supabase is unavailable)
+    // User will just appear logged out until connection is restored
+    console.error("Auth check failed:", error);
+  }
 
   return supabaseResponse;
 }

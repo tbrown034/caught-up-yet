@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# inspiration images (uncommit specific files if you want to share them)
+/inspiration/*
+!/inspiration/README.md
