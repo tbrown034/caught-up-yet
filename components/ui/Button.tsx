@@ -41,8 +41,9 @@ export default function Button({
   const classes = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
   if (asLink && href) {
+    const { className: _, ...linkProps } = props as any;
     return (
-      <a href={href} className={classes}>
+      <a href={href} className={classes} {...linkProps}>
         {children}
       </a>
     );

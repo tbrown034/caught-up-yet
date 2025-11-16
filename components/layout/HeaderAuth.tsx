@@ -16,7 +16,13 @@ export default async function HeaderAuth() {
             Sign Out
           </Button>
         </form>
-        <Button variant="ghost" size="sm" href="/profile" asLink>
+        <Button
+          variant="ghost"
+          size="sm"
+          href="/profile"
+          asLink
+          aria-label="View profile"
+        >
           <CircleUser className="w-5 h-5" />
         </Button>
       </div>

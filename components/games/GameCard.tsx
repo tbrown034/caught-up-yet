@@ -32,12 +32,20 @@ export default function GameCard({ game }: GameCardProps) {
             {game.sport.toUpperCase()}
           </span>
           {isLive && (
-            <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded">
+            <span
+              className="px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded"
+              role="status"
+              aria-live="polite"
+            >
               LIVE
             </span>
           )}
           {isFinal && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded">
+            <span
+              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded"
+              role="status"
+              aria-live="polite"
+            >
               FINAL
             </span>
           )}
@@ -103,7 +111,11 @@ export default function GameCard({ game }: GameCardProps) {
 
         {/* Game Status Detail */}
         {isLive && game.status.displayClock && (
-          <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+          <div
+            className="mt-4 pt-4 border-t border-gray-100 text-center"
+            role="status"
+            aria-live="polite"
+          >
             <p className="text-sm text-gray-600">{game.status.detail}</p>
           </div>
         )}

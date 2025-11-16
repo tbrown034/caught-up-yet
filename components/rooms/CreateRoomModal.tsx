@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import type { ESPNGame } from "@/lib/espn-api";
 import { formatShareCode } from "@/lib/share-code";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface CreateRoomModalProps {
   game: ESPNGame;
@@ -20,6 +21,7 @@ export default function CreateRoomModal({
   const [error, setError] = useState<string | null>(null);
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const modalRef = useFocusTrap(true);
 
   const awayTeam = game.competitors[0];
   const homeTeam = game.competitors[1];
@@ -79,17 +81,27 @@ export default function CreateRoomModal({
   // Show success state with share code
   if (shareCode && roomId) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div
+        ref={modalRef}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="success-modal-title"
+      >
         <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2
+              id="success-modal-title"
+              className="text-2xl font-bold text-gray-900 mb-2"
+            >
               Watch Party Created! 🎉
             </h2>
             <p className="text-sm text-gray-600 mb-6">
@@ -104,6 +116,7 @@ export default function CreateRoomModal({
               <button
                 onClick={copyShareCode}
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                aria-label="Copy share code to clipboard"
               >
                 Copy Code
               </button>
@@ -131,16 +144,26 @@ export default function CreateRoomModal({
 
   // Show create form
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-modal-title"
+    >
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <h2
+          id="create-modal-title"
+          className="text-2xl font-bold text-gray-900 mb-4"
+        >
           Create Watch Party
         </h2>
 
@@ -168,7 +191,11 @@ export default function CreateRoomModal({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div
+            className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4"
+            role="alert"
+            aria-live="assertive"
+          >
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
