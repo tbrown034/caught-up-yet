@@ -6,11 +6,18 @@ import { Eye, EyeOff, Users, Share2 } from "lucide-react";
 import type {
   Room,
   Message,
+  MessageWithAuthor,
   GamePosition,
   NflPosition,
+  MlbPosition,
+  NbaPosition,
+  NhlPosition,
   GameData,
 } from "@/lib/database.types";
 import NflPositionSlider from "@/components/rooms/NflPositionSlider";
+import MlbPositionSlider from "@/components/rooms/MlbPositionSlider";
+import NbaPositionSlider from "@/components/rooms/NbaPositionSlider";
+import NhlPositionSlider from "@/components/rooms/NhlPositionSlider";
 import MessageFeed from "@/components/rooms/MessageFeed";
 import MessageComposer from "@/components/rooms/MessageComposer";
 import { formatShareCode } from "@/lib/share-code";
@@ -26,7 +33,7 @@ export default function RoomPage({
   const supabase = createClient();
 
   const [room, setRoom] = useState<Room | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithAuthor[]>([]);
   const [currentPosition, setCurrentPosition] = useState<GamePosition | null>(
     null
   );
@@ -83,11 +90,56 @@ export default function RoomPage({
     fetchRoomData();
   }, [id]);
 
-  // Poll for new messages every 10 seconds
+  // Subscribe to real-time message updates
   useEffect(() => {
-    const interval = setInterval(fetchRoomData, 10000);
-    return () => clearInterval(interval);
-  }, [id]);
+    const channel = supabase
+      .channel(`room:${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `room_id=eq.${id}`,
+        },
+        async (payload) => {
+          // Fetch profile for the new message
+          const newMessage = payload.new as Message;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("user_id", newMessage.user_id)
+            .single();
+
+          // Add new message with author name to state
+          setMessages((prev) => [
+            ...prev,
+            {
+              ...newMessage,
+              author_name: profile?.display_name,
+            },
+          ]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "room_members",
+          filter: `room_id=eq.${id}`,
+        },
+        () => {
+          // Refresh member data when positions update
+          fetchRoomData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, supabase]);
 
   // Update position
   const handlePositionChange = async (newPosition: GamePosition) => {
@@ -227,10 +279,28 @@ export default function RoomPage({
           </div>
         </div>
 
-        {/* Position Slider (NFL only for now) */}
+        {/* Position Slider */}
         {room.sport === "nfl" && (
           <NflPositionSlider
             position={currentPosition as NflPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+        {room.sport === "mlb" && (
+          <MlbPositionSlider
+            position={currentPosition as MlbPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+        {room.sport === "nba" && (
+          <NbaPositionSlider
+            position={currentPosition as NbaPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+        {room.sport === "nhl" && (
+          <NhlPositionSlider
+            position={currentPosition as NhlPosition}
             onChange={handlePositionChange}
           />
         )}

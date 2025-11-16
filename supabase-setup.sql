@@ -63,6 +63,14 @@ CREATE TABLE messages (
   CONSTRAINT content_length CHECK (char_length(content) <= 500)
 );
 
+-- Profiles: user display names and preferences
+CREATE TABLE profiles (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- INDEXES for performance
 -- ============================================
@@ -82,6 +90,7 @@ CREATE INDEX idx_messages_created_at ON messages(room_id, created_at DESC);
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- ROOMS POLICIES
 -- Anyone can view rooms they're a member of
@@ -158,6 +167,22 @@ CREATE POLICY "Users can delete their own messages"
   ON messages FOR DELETE
   USING (auth.uid() = user_id);
 
+-- PROFILES POLICIES
+-- Anyone can view profiles
+CREATE POLICY "Anyone can view profiles"
+  ON profiles FOR SELECT
+  USING (true);
+
+-- Users can insert their own profile
+CREATE POLICY "Users can create their own profile"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
 -- ============================================
 -- HELPER FUNCTIONS
 -- ============================================
@@ -191,6 +216,29 @@ CREATE TRIGGER update_room_member_timestamp
   BEFORE UPDATE ON room_members
   FOR EACH ROW
   EXECUTE FUNCTION update_last_updated();
+
+-- Function to create profile from new user signup
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, display_name)
+  VALUES (
+    NEW.id,
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      split_part(NEW.email, '@', 1)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to auto-create profile on user signup
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();
 
 -- ============================================
 -- INITIAL DATA (optional)

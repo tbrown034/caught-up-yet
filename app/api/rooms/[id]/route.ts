@@ -56,10 +56,13 @@ export async function GET(
       console.error("Error fetching members:", membersError);
     }
 
-    // Get messages
+    // Get messages with author profiles
     const { data: messages, error: messagesError } = await supabase
       .from("messages")
-      .select("*")
+      .select(`
+        *,
+        profiles!inner(display_name)
+      `)
       .eq("room_id", id)
       .order("created_at", { ascending: true });
 
@@ -67,10 +70,16 @@ export async function GET(
       console.error("Error fetching messages:", messagesError);
     }
 
+    // Transform messages to include author_name
+    const messagesWithAuthors = messages?.map(msg => ({
+      ...msg,
+      author_name: (msg as any).profiles?.display_name
+    })) || [];
+
     return NextResponse.json({
       room,
       members: members || [],
-      messages: messages || [],
+      messages: messagesWithAuthors,
       current_user_position: membership.current_position,
       show_spoilers: membership.show_spoilers,
     });

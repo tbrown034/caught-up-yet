@@ -137,6 +137,26 @@ export interface Database {
           created_at?: string;
         };
       };
+      profiles: {
+        Row: {
+          user_id: string;
+          display_name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          display_name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          display_name?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -159,6 +179,10 @@ export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type MessageInsert = Database["public"]["Tables"]["messages"]["Insert"];
 export type MessageUpdate = Database["public"]["Tables"]["messages"]["Update"];
 
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
 // ============================================
 // EXTENDED TYPES (with joined data)
 // ============================================
@@ -170,6 +194,7 @@ export type RoomWithCreator = Room & {
 
 export type MessageWithAuthor = Message & {
   author_email?: string;
+  author_name?: string;
 };
 
 export type RoomMemberWithUser = RoomMember & {

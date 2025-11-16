@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, PartyPopper } from "lucide-react";
 import type { ESPNGame } from "@/lib/espn-api";
 import { formatShareCode } from "@/lib/share-code";
 
@@ -89,9 +89,12 @@ export default function CreateRoomModal({
           </button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Watch Party Created! 🎉
-            </h2>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Watch Party Created!
+              </h2>
+              <PartyPopper className="w-6 h-6 text-blue-600" />
+            </div>
             <p className="text-sm text-gray-600 mb-6">
               Share this code with your friends and family
             </p>

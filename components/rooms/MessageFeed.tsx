@@ -1,11 +1,11 @@
 "use client";
 
-import type { Message } from "@/lib/database.types";
+import type { Message, MessageWithAuthor } from "@/lib/database.types";
 import { formatGamePosition, isMessageVisible } from "@/lib/game-position";
 import type { GamePosition } from "@/lib/database.types";
 
 interface MessageFeedProps {
-  messages: Message[];
+  messages: MessageWithAuthor[];
   currentPosition: GamePosition;
   sport: "nfl" | "mlb" | "nba" | "nhl";
   showSpoilers: boolean;
@@ -68,7 +68,7 @@ export default function MessageFeed({
             >
               <div className="flex justify-between items-start mb-2">
                 <p className="text-xs font-semibold text-gray-500">
-                  {isOwnMessage ? "You" : `User ${msg.user_id.slice(0, 8)}`}
+                  {isOwnMessage ? "You" : msg.author_name || "Unknown User"}
                 </p>
                 <p className="text-xs text-gray-500">{positionLabel}</p>
               </div>
