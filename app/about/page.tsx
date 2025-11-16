@@ -21,16 +21,93 @@ import {
   Cookie,
   Lightbulb,
   Target,
-  TrendingUp,
   Globe,
+  Play,
+  Pause,
+  SkipForward,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState<"privacy" | "terms" | "cookies">(
     "privacy"
   );
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [demoProgress, setDemoProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Scroll-triggered animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-in");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    document.querySelectorAll(".fade-in-section").forEach((el) => {
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Interactive demo
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      setDemoProgress((prev) => {
+        if (prev >= 100) {
+          setIsPlaying(false);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const resetDemo = () => {
+    setDemoProgress(0);
+    setIsPlaying(false);
+  };
+
+  const demoMessages = [
+    {
+      user: "Dad",
+      time: "Q1, 10:30",
+      message: "Great start! Defense looking strong 🏈",
+      unlockAt: 10,
+      color: "blue",
+    },
+    {
+      user: "You",
+      time: "Q2, 8:15",
+      message: "That play action was perfect!",
+      unlockAt: 35,
+      color: "green",
+    },
+    {
+      user: "Sister",
+      time: "Q3, 5:00",
+      message: "Can't believe that interception!",
+      unlockAt: 60,
+      color: "purple",
+    },
+    {
+      user: "Dad",
+      time: "Q4, 2:30",
+      message: "TOUCHDOWN! What a catch! 🎉",
+      unlockAt: 85,
+      color: "blue",
+    },
+  ];
 
   const faqs = [
     {
@@ -71,20 +148,20 @@ export default function AboutPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-blue-500/30 backdrop-blur-sm border border-blue-400/30 text-blue-100 px-4 py-2 rounded-full text-sm font-medium mb-8">
+            <div className="inline-flex items-center gap-2 bg-blue-500/30 backdrop-blur-sm border border-blue-400/30 text-blue-100 px-4 py-2 rounded-full text-sm font-medium mb-8 animate-fade-in">
               <Heart className="w-4 h-4" />
               <span>Built with Love for Sports Fans</span>
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight animate-fade-in-up">
               About {SITE_CONFIG.name}
             </h1>
 
-            <p className="text-xl sm:text-2xl text-blue-100 mb-8 leading-relaxed">
+            <p className="text-xl sm:text-2xl text-blue-100 mb-8 leading-relaxed animate-fade-in-up animation-delay-200">
               {SITE_CONFIG.tagline}
             </p>
 
-            <p className="text-lg text-blue-200 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg text-blue-200 leading-relaxed max-w-3xl mx-auto animate-fade-in-up animation-delay-400">
               We're on a mission to bring back the magic of watching sports
               together—even when life means you can't all watch at the same
               time. Because the best part of sports isn't just the game, it's
@@ -97,7 +174,7 @@ export default function AboutPage() {
       {/* The Journey: Problem → Solution */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               The Journey
             </h2>
@@ -108,8 +185,8 @@ export default function AboutPage() {
 
           <div className="grid lg:grid-cols-3 gap-8 relative">
             {/* Problem */}
-            <div className="relative">
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 h-full hover:shadow-xl transition-all">
+            <div className="relative fade-in-section">
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 h-full hover:shadow-xl transition-all hover:scale-105 duration-300">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <MessageCircle className="w-8 h-8 text-red-600" />
                 </div>
@@ -131,8 +208,8 @@ export default function AboutPage() {
             </div>
 
             {/* Idea */}
-            <div className="relative">
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 h-full hover:shadow-xl transition-all">
+            <div className="relative fade-in-section animation-delay-200">
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 h-full hover:shadow-xl transition-all hover:scale-105 duration-300">
                 <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <Lightbulb className="w-8 h-8 text-yellow-600" />
                 </div>
@@ -154,8 +231,8 @@ export default function AboutPage() {
             </div>
 
             {/* Solution */}
-            <div className="relative">
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-8 h-full hover:shadow-xl transition-all">
+            <div className="relative fade-in-section animation-delay-400">
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-8 h-full hover:shadow-xl transition-all hover:scale-105 duration-300">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
@@ -175,10 +252,131 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Interactive Demo Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 fade-in-section">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              See It In Action
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Watch how messages unlock as you progress through the game
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto fade-in-section">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              {/* Progress Bar */}
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-semibold text-gray-300">
+                    Your Progress
+                  </span>
+                  <span className="text-sm font-semibold text-blue-300">
+                    {demoProgress}% Complete
+                  </span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-3 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${demoProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="space-y-4 mb-8 min-h-[300px]">
+                {demoMessages.map((msg, idx) => {
+                  const isUnlocked = demoProgress >= msg.unlockAt;
+                  return (
+                    <div
+                      key={idx}
+                      className={`transition-all duration-500 ${
+                        isUnlocked
+                          ? "opacity-100 translate-x-0"
+                          : "opacity-40 translate-x-4"
+                      }`}
+                    >
+                      <div
+                        className={`rounded-lg p-4 ${
+                          isUnlocked
+                            ? "bg-white/20 border-2 border-white/30 shadow-lg"
+                            : "bg-white/5 border-2 border-dashed border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              isUnlocked
+                                ? `bg-${msg.color}-600`
+                                : "bg-gray-500"
+                            }`}
+                          >
+                            {isUnlocked ? (
+                              <Users className="w-5 h-5 text-white" />
+                            ) : (
+                              <Lock className="w-5 h-5 text-white" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-white">
+                                {msg.user}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {msg.time}
+                              </span>
+                            </div>
+                            {isUnlocked ? (
+                              <p className="text-gray-200">{msg.message}</p>
+                            ) : (
+                              <p className="text-gray-500 italic text-sm">
+                                Message locked until you reach {msg.time}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-lg"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-5 h-5" />
+                      Pause
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      {demoProgress === 0 ? "Start Demo" : "Resume"}
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={resetDemo}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+                >
+                  <SkipForward className="w-5 h-5" />
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Impact Stats */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Built for Real People
             </h2>
@@ -188,7 +386,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all hover:-translate-y-1 duration-300 fade-in-section">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Shield className="w-8 h-8 text-blue-600" />
               </div>
@@ -201,7 +399,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all hover:-translate-y-1 duration-300 fade-in-section animation-delay-200">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Users className="w-8 h-8 text-green-600" />
               </div>
@@ -214,7 +412,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all hover:-translate-y-1 duration-300 fade-in-section animation-delay-400">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Globe className="w-8 h-8 text-purple-600" />
               </div>
@@ -225,7 +423,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center hover:shadow-lg transition-all hover:-translate-y-1 duration-300 fade-in-section animation-delay-600">
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Zap className="w-8 h-8 text-orange-600" />
               </div>
@@ -242,7 +440,7 @@ export default function AboutPage() {
       {/* How It Really Works */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How It Really Works
             </h2>
@@ -252,8 +450,8 @@ export default function AboutPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="flex gap-4">
+            <div className="space-y-6 fade-in-section">
+              <div className="flex gap-4 hover:translate-x-2 transition-transform duration-300">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                     1
@@ -271,7 +469,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 hover:translate-x-2 transition-transform duration-300">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                     2
@@ -289,7 +487,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 hover:translate-x-2 transition-transform duration-300">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                     3
@@ -307,7 +505,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 hover:translate-x-2 transition-transform duration-300">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                     4
@@ -326,7 +524,7 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border-2 border-blue-200">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border-2 border-blue-200 fade-in-section animation-delay-400">
               <div className="space-y-4">
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-200">
                   <div className="flex items-start gap-3">
@@ -391,7 +589,7 @@ export default function AboutPage() {
       {/* The Story Behind It */}
       <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto fade-in-section">
             <div className="text-center mb-12">
               <Target className="w-16 h-16 mx-auto mb-6 text-blue-200" />
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
@@ -431,7 +629,7 @@ export default function AboutPage() {
       {/* Developer Spotlight */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Meet the Developer
             </h2>
@@ -441,8 +639,8 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-8 lg:p-12 border-2 border-gray-200 shadow-xl">
+          <div className="max-w-4xl mx-auto fade-in-section animation-delay-200">
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-8 lg:p-12 border-2 border-gray-200 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
                 <div className="flex-shrink-0">
                   <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-lg">
@@ -475,7 +673,7 @@ export default function AboutPage() {
                       href={SITE_CONFIG.developer.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors shadow-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 duration-200"
                     >
                       <Github className="w-4 h-4" />
                       <span className="font-medium">GitHub</span>
@@ -484,7 +682,7 @@ export default function AboutPage() {
                       href={SITE_CONFIG.developer.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 duration-200"
                     >
                       <Linkedin className="w-4 h-4" />
                       <span className="font-medium">LinkedIn</span>
@@ -493,7 +691,7 @@ export default function AboutPage() {
                       href={SITE_CONFIG.developer.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 duration-200"
                     >
                       <ExternalLink className="w-4 h-4" />
                       <span className="font-medium">Portfolio</span>
@@ -517,7 +715,7 @@ export default function AboutPage() {
       {/* FAQ Section */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Frequently Asked Questions
             </h2>
@@ -526,11 +724,11 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 fade-in-section animation-delay-200">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden hover:border-blue-300 transition-colors"
+                className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden hover:border-blue-300 transition-all hover:shadow-md"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
@@ -540,13 +738,13 @@ export default function AboutPage() {
                     {faq.question}
                   </span>
                   <ChevronDown
-                    className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform ${
+                    className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${
                       openFaq === index ? "transform rotate-180" : ""
                     }`}
                   />
                 </button>
                 {openFaq === index && (
-                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 animate-slide-down">
                     <p className="text-gray-700 leading-relaxed">
                       {faq.answer}
                     </p>
@@ -561,7 +759,7 @@ export default function AboutPage() {
       {/* Privacy & Legal Tabs */}
       <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 fade-in-section">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Privacy & Legal
             </h2>
@@ -572,12 +770,12 @@ export default function AboutPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
+          <div className="flex flex-wrap gap-2 justify-center mb-8 fade-in-section animation-delay-200">
             <button
               onClick={() => setActiveTab("privacy")}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 activeTab === "privacy"
-                  ? "bg-blue-600 text-white shadow-lg"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -588,7 +786,7 @@ export default function AboutPage() {
               onClick={() => setActiveTab("terms")}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 activeTab === "terms"
-                  ? "bg-blue-600 text-white shadow-lg"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -599,7 +797,7 @@ export default function AboutPage() {
               onClick={() => setActiveTab("cookies")}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 activeTab === "cookies"
-                  ? "bg-blue-600 text-white shadow-lg"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -609,7 +807,7 @@ export default function AboutPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-gray-50 rounded-xl p-8 border-2 border-gray-200">
+          <div className="bg-gray-50 rounded-xl p-8 border-2 border-gray-200 fade-in-section animation-delay-400">
             {activeTab === "privacy" && (
               <div className="prose prose-lg max-w-none">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">
@@ -871,7 +1069,7 @@ export default function AboutPage() {
       </section>
 
       {/* Contact CTA */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-700">
+      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-700 fade-in-section">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Mail className="w-16 h-16 mx-auto mb-6 text-blue-200" />
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
@@ -925,8 +1123,8 @@ export default function AboutPage() {
 
       {/* Final CTA */}
       <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12 border-2 border-blue-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center fade-in-section">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12 border-2 border-blue-200 hover:shadow-xl transition-shadow duration-300">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
               Ready to Watch Without Spoilers?
             </h2>
