@@ -2,15 +2,20 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Users, Share2 } from "lucide-react";
+import { Eye, EyeOff, Users, Share2, ArrowLeft } from "lucide-react";
 import type {
   Room,
   Message,
   GamePosition,
   NflPosition,
+  NhlPosition,
+  NbaPosition,
   GameData,
 } from "@/lib/database.types";
 import NflPositionSlider from "@/components/rooms/NflPositionSlider";
+import NhlPositionSlider from "@/components/rooms/NhlPositionSlider";
+import NbaPositionSlider from "@/components/rooms/NbaPositionSlider";
+import MlbPositionPlaceholder from "@/components/rooms/MlbPositionPlaceholder";
 import MessageFeed from "@/components/rooms/MessageFeed";
 import MessageComposer from "@/components/rooms/MessageComposer";
 import { formatShareCode } from "@/lib/share-code";
@@ -154,16 +159,35 @@ export default function RoomPage({
   if (error || !room || !currentPosition) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full text-center">
-          <p className="text-red-600 font-semibold mb-4">
-            {error || "Failed to load watch party"}
-          </p>
-          <button
-            onClick={() => router.push("/games")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-          >
-            Back to Games
-          </button>
+        <div className="bg-white border border-red-200 rounded-lg p-8 max-w-md w-full text-center shadow-lg">
+          <div className="mb-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Unable to Load Watch Party
+            </h2>
+            <p className="text-red-600 font-medium mb-2">
+              {error || "Failed to load watch party"}
+            </p>
+            <p className="text-sm text-gray-600">
+              The room may not exist or you may not have access to it.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => router.push("/games")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            >
+              Back to Games
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition-colors"
+            >
+              View My Rooms
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -174,6 +198,15 @@ export default function RoomPage({
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/games")}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back to Games</span>
+        </button>
+
         {/* Header */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex justify-between items-start mb-4">
@@ -227,13 +260,26 @@ export default function RoomPage({
           </div>
         </div>
 
-        {/* Position Slider (NFL only for now) */}
+        {/* Position Sliders */}
         {room.sport === "nfl" && (
           <NflPositionSlider
             position={currentPosition as NflPosition}
             onChange={handlePositionChange}
           />
         )}
+        {room.sport === "nhl" && (
+          <NhlPositionSlider
+            position={currentPosition as NhlPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+        {room.sport === "nba" && (
+          <NbaPositionSlider
+            position={currentPosition as NbaPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+        {room.sport === "mlb" && <MlbPositionPlaceholder />}
 
         {/* Message Composer */}
         {userId && (
