@@ -53,9 +53,7 @@ export default function GamesContainer({
 
   const gameCounts: Record<Sport, number> = {
     nfl: games.filter((g) => g.sport === "nfl").length,
-    mlb: games.filter((g) => g.sport === "mlb").length,
     nba: games.filter((g) => g.sport === "nba").length,
-    nhl: games.filter((g) => g.sport === "nhl").length,
   };
 
   return (

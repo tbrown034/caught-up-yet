@@ -7,7 +7,7 @@ import type { GamePosition } from "@/lib/database.types";
 interface MessageFeedProps {
   messages: Message[];
   currentPosition: GamePosition;
-  sport: "nfl" | "mlb" | "nba" | "nhl";
+  sport: "nfl" | "nba";
   showSpoilers: boolean;
   currentUserId: string;
 }

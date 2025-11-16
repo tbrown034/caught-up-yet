@@ -1,4 +1,4 @@
-export type Sport = "nfl" | "mlb" | "nba" | "nhl";
+export type Sport = "nfl" | "nba";
 
 export interface ESPNGame {
   id: string;
@@ -105,14 +105,12 @@ async function fetchSportGames(sport: Sport, date: Date): Promise<ESPNGame[]> {
 }
 
 export async function fetchAllSportsGames(date: Date): Promise<ESPNGame[]> {
-  const [nflGames, mlbGames, nbaGames, nhlGames] = await Promise.all([
+  const [nflGames, nbaGames] = await Promise.all([
     fetchSportGames("nfl", date),
-    fetchSportGames("mlb", date),
     fetchSportGames("nba", date),
-    fetchSportGames("nhl", date),
   ]);
 
-  return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames].sort(
+  return [...nflGames, ...nbaGames].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 }

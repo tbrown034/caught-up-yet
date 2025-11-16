@@ -8,7 +8,7 @@ import { formatGamePosition } from "@/lib/game-position";
 interface MessageComposerProps {
   roomId: string;
   currentPosition: GamePosition;
-  sport: "nfl" | "mlb" | "nba" | "nhl";
+  sport: "nfl" | "nba";
   onMessageSent: () => void;
 }
 

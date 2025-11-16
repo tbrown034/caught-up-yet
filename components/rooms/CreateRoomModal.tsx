@@ -162,7 +162,7 @@ export default function CreateRoomModal({
           <p className="text-sm text-blue-900">
             <strong>How it works:</strong> Create a private watch party for
             this game. You'll get a share code to invite friends and family.
-            Everyone can chat while watching at their own pace—spoiler
+            Everyone can chat while watching at their own pace with spoiler
             protection included!
           </p>
         </div>

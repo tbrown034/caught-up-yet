@@ -39,7 +39,7 @@ export default async function Home() {
 
             <p className="text-xl sm:text-2xl text-gray-600 mb-12 leading-relaxed max-w-3xl mx-auto">
               Share real-time reactions with friends and family while watching
-              at different times. Messages reveal only when you reach that moment—just
+              at different times. Messages reveal only when you reach that moment, just
               like watching together on the couch.
             </p>
 
@@ -91,7 +91,7 @@ export default async function Home() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Different Schedules</h3>
               <p className="text-gray-600 text-sm">
-                Everyone watches at different times—live, DVR, streaming delays
+                Everyone watches at different times with live, DVR or streaming delays
               </p>
             </div>
 
@@ -139,7 +139,7 @@ export default async function Home() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Watch on Your Time</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Live, DVR, streaming—doesn't matter. Everyone stays synced without watching
+                Live, DVR or streaming, it doesn't matter. Everyone stays synced without watching
                 simultaneously.
               </p>
             </div>
@@ -161,8 +161,7 @@ export default async function Home() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Real-Time Sync</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Powered by live game data from ESPN. Track progress across NFL, NBA,
-                MLB, and NHL.
+                Powered by live game data from ESPN. Track progress across NFL and NBA.
               </p>
             </div>
           </div>
@@ -195,7 +194,7 @@ export default async function Home() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2 text-lg">Stay Synced</h3>
               <p className="text-gray-600 text-sm">
-                Everyone sees messages only when they reach that point—no spoilers!
+                Everyone sees messages only when they reach that point with no spoilers!
               </p>
             </div>
           </div>
@@ -292,9 +291,9 @@ export default async function Home() {
             </h2>
             <p className="text-lg text-blue-100 mb-8 leading-relaxed">
               Remember when everyone could watch the game together? Now you can have that
-              same shared experience—even when watching hours apart. Dad's watching live,
-              you're catching up after the kids go to bed, and your sister's watching the
-              replay tomorrow. Everyone gets the full experience, no spoilers.
+              same shared experience even when watching hours apart. Dad's watching live,
+              you're catching up after the kids go to bed and your sister's watching the
+              replay tomorrow. Everyone gets the full experience with no spoilers.
             </p>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 border border-white/20">
@@ -328,7 +327,7 @@ export default async function Home() {
             </p>
 
             <div className="flex flex-wrap justify-center gap-6">
-              {["NFL", "NBA", "MLB", "NHL"].map((sport) => (
+              {["NFL", "NBA"].map((sport) => (
                 <div
                   key={sport}
                   className="bg-white border-2 border-gray-200 rounded-lg px-8 py-6 shadow-sm hover:border-blue-600 hover:shadow-md transition-all"
@@ -348,7 +347,7 @@ export default async function Home() {
             Ready to Watch Without Spoilers?
           </h2>
           <p className="text-xl text-gray-600 mb-10">
-            Join families and friends who are already enjoying sports together—on their own time.
+            Join families and friends who are already enjoying sports together on their own time.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

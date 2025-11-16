@@ -8,9 +8,11 @@ import type {
   Message,
   GamePosition,
   NflPosition,
+  NbaPosition,
   GameData,
 } from "@/lib/database.types";
 import NflPositionSlider from "@/components/rooms/NflPositionSlider";
+import NbaPositionSlider from "@/components/rooms/NbaPositionSlider";
 import MessageFeed from "@/components/rooms/MessageFeed";
 import MessageComposer from "@/components/rooms/MessageComposer";
 import { formatShareCode } from "@/lib/share-code";
@@ -227,10 +229,17 @@ export default function RoomPage({
           </div>
         </div>
 
-        {/* Position Slider (NFL only for now) */}
+        {/* Position Slider */}
         {room.sport === "nfl" && (
           <NflPositionSlider
             position={currentPosition as NflPosition}
+            onChange={handlePositionChange}
+          />
+        )}
+
+        {room.sport === "nba" && (
+          <NbaPositionSlider
+            position={currentPosition as NbaPosition}
             onChange={handlePositionChange}
           />
         )}
@@ -240,7 +249,7 @@ export default function RoomPage({
           <MessageComposer
             roomId={id}
             currentPosition={currentPosition}
-            sport={room.sport as "nfl" | "mlb" | "nba" | "nhl"}
+            sport={room.sport as "nfl" | "nba"}
             onMessageSent={fetchRoomData}
           />
         )}
@@ -250,7 +259,7 @@ export default function RoomPage({
           <MessageFeed
             messages={messages}
             currentPosition={currentPosition}
-            sport={room.sport as "nfl" | "mlb" | "nba" | "nhl"}
+            sport={room.sport as "nfl" | "nba"}
             showSpoilers={showSpoilers}
             currentUserId={userId}
           />

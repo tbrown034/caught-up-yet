@@ -106,7 +106,7 @@ export function compareNhlPositions(
 export function isMessageVisible(
   messagePosition: GamePosition,
   userPosition: GamePosition,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "nba"
 ): boolean {
   try {
     let comparison: -1 | 0 | 1;
@@ -118,22 +118,10 @@ export function isMessageVisible(
           userPosition as NflPosition
         );
         break;
-      case "mlb":
-        comparison = compareMlbPositions(
-          messagePosition as MlbPosition,
-          userPosition as MlbPosition
-        );
-        break;
       case "nba":
         comparison = compareNbaPositions(
           messagePosition as NbaPosition,
           userPosition as NbaPosition
-        );
-        break;
-      case "nhl":
-        comparison = compareNhlPositions(
-          messagePosition as NhlPosition,
-          userPosition as NhlPosition
         );
         break;
       default:
@@ -198,17 +186,13 @@ export function formatNhlPosition(pos: NhlPosition): string {
  */
 export function formatGamePosition(
   pos: GamePosition,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "nba"
 ): string {
   switch (sport) {
     case "nfl":
       return formatNflPosition(pos as NflPosition);
-    case "mlb":
-      return formatMlbPosition(pos as MlbPosition);
     case "nba":
       return formatNbaPosition(pos as NbaPosition);
-    case "nhl":
-      return formatNhlPosition(pos as NhlPosition);
     default:
       return "Unknown";
   }
@@ -231,17 +215,13 @@ function getOrdinal(n: number): string {
  * Get initial position for a sport (game start)
  */
 export function getInitialPosition(
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "nba"
 ): GamePosition {
   switch (sport) {
     case "nfl":
       return { quarter: 1, minutes: 15, seconds: 0 } as NflPosition;
-    case "mlb":
-      return { inning: 1, half: "TOP", outs: 0 } as MlbPosition;
     case "nba":
       return { quarter: 1, minutes: 12, seconds: 0 } as NbaPosition;
-    case "nhl":
-      return { period: 1, minutes: 20, seconds: 0 } as NhlPosition;
     default:
       throw new Error(`Unsupported sport: ${sport}`);
   }
@@ -252,7 +232,7 @@ export function getInitialPosition(
  */
 export function isValidPosition(
   pos: unknown,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "nba"
 ): boolean {
   if (!pos || typeof pos !== "object") return false;
 
@@ -268,14 +248,6 @@ export function isValidPosition(
           typeof nflPos.seconds === "number"
         );
       }
-      case "mlb": {
-        const mlbPos = pos as MlbPosition;
-        return (
-          typeof mlbPos.inning === "number" &&
-          mlbPos.inning >= 1 &&
-          (mlbPos.half === "TOP" || mlbPos.half === "BOTTOM")
-        );
-      }
       case "nba": {
         const nbaPos = pos as NbaPosition;
         return (
@@ -284,16 +256,6 @@ export function isValidPosition(
           nbaPos.quarter <= 4 &&
           typeof nbaPos.minutes === "number" &&
           typeof nbaPos.seconds === "number"
-        );
-      }
-      case "nhl": {
-        const nhlPos = pos as NhlPosition;
-        return (
-          typeof nhlPos.period === "number" &&
-          nhlPos.period >= 1 &&
-          nhlPos.period <= 3 &&
-          typeof nhlPos.minutes === "number" &&
-          typeof nhlPos.seconds === "number"
         );
       }
       default:
