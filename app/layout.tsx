@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import { inter, outfit, jetbrainsMono } from "@/lib/fonts";
+import { plusJakartaSans, urbanist, jetbrainsMono } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans antialiased flex flex-col min-h-screen`}
+        className={`${plusJakartaSans.variable} ${urbanist.variable} ${jetbrainsMono.variable} font-sans antialiased flex flex-col min-h-screen`}
       >
         <Header />
         <main className="flex-1">{children}</main>

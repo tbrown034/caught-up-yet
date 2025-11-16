@@ -1,19 +1,15 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    --font-sans: var(--font-inter);
-    --font-heading: var(--font-outfit);
-  }
-
-  /* Body text - Inter */
+  /* Body text - Plus Jakarta Sans (warm, friendly) */
   body {
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-sans), system-ui, sans-serif;
   }
 
-  /* Headings - Outfit */
+  /* Headings - Urbanist (bold, contemporary) */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-outfit), system-ui, sans-serif;
+    font-family: var(--font-heading), system-ui, sans-serif;
+    font-weight: 700; /* Default to bold for headings */
   }
 
   /* Monospace - JetBrains Mono (for code/technical text) */
