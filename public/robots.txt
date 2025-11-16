@@ -1,0 +1,14 @@
+# Robots.txt for Caught Up Yet?
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Disallow authentication and API routes
+Disallow: /api/
+Disallow: /login
+Disallow: /dashboard
+Disallow: /profile
+
+# Sitemap location
+Sitemap: https://caughtupyet.com/sitemap.xml
