@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { ESPNGame } from "@/lib/espn-api";
 import Image from "next/image";
-import { Users } from "lucide-react";
+import { Users, LogIn } from "lucide-react";
 import CreateRoomModal from "@/components/rooms/CreateRoomModal";
+import JoinRoomModal from "@/components/rooms/JoinRoomModal";
 
 interface GameCardProps {
   game: ESPNGame;
@@ -12,6 +13,7 @@ interface GameCardProps {
 
 export default function GameCard({ game }: GameCardProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const awayTeam = game.competitors[0];
   const homeTeam = game.competitors[1];
   const isLive = game.status.type === "STATUS_IN_PROGRESS";
@@ -108,24 +110,35 @@ export default function GameCard({ game }: GameCardProps) {
           </div>
         )}
 
-        {/* Create Watch Party Button */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        {/* Action Buttons */}
+        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Users className="w-5 h-5" />
-            Create Watch Party
+            <span className="hidden sm:inline">Create</span>
+          </button>
+          <button
+            onClick={() => setShowJoinModal(true)}
+            className="border-2 border-blue-600 hover:bg-blue-50 text-blue-600 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <LogIn className="w-5 h-5" />
+            <span className="hidden sm:inline">Join</span>
           </button>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {showCreateModal && (
         <CreateRoomModal
           game={game}
           onClose={() => setShowCreateModal(false)}
         />
+      )}
+
+      {showJoinModal && (
+        <JoinRoomModal onClose={() => setShowJoinModal(false)} />
       )}
     </>
   );
