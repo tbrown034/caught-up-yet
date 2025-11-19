@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateShareCode } from "@/lib/share-code";
 import { getInitialPosition } from "@/lib/game-position";
+import { getInitialEncodedPosition } from "@/lib/position-encoding";
 import type { GameData } from "@/lib/database.types";
 
 // POST /api/rooms - Create a new room
@@ -19,9 +20,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Don't allow anonymous users to create rooms
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { error: "Guests cannot create rooms. Please sign in first." },
+        { status: 403 }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
-    const { game_id, sport, game_data } = body;
+    const { game_id, sport, game_data, name } = body;
 
     // Validate required fields
     if (!game_id || !sport) {
@@ -29,6 +38,22 @@ export async function POST(request: Request) {
         { error: "Missing required fields: game_id, sport" },
         { status: 400 }
       );
+    }
+
+    // Validate name if provided
+    if (name !== undefined && name !== null) {
+      if (typeof name !== "string") {
+        return NextResponse.json(
+          { error: "Name must be a string" },
+          { status: 400 }
+        );
+      }
+      if (name.trim().length > 100) {
+        return NextResponse.json(
+          { error: "Name must be 100 characters or less" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate sport
@@ -64,11 +89,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set expiration to end of today (11:59 PM)
+    // Set expiration to 24 hours from now
     const expiresAt = new Date();
-    expiresAt.setHours(23, 59, 59, 999);
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     // Create room
+    console.log('[CREATE] Creating room with share code:', shareCode);
     const { data: room, error: roomError } = await supabase
       .from("rooms")
       .insert({
@@ -79,9 +105,12 @@ export async function POST(request: Request) {
         expires_at: expiresAt.toISOString(),
         game_data: game_data as GameData,
         is_active: true,
+        name: name?.trim() || null,
       })
       .select()
       .single();
+
+    console.log('[CREATE] Room created:', { id: room?.id, share_code: room?.share_code });
 
     if (roomError) {
       console.error("Error creating room:", roomError);
@@ -95,12 +124,20 @@ export async function POST(request: Request) {
     const initialPosition = getInitialPosition(
       sport as "nfl" | "mlb" | "nba" | "nhl"
     );
+    const initialPositionEncoded = getInitialEncodedPosition(
+      sport as "nfl" | "mlb" | "nba" | "nhl"
+    );
+
+    // Get display name from email
+    const displayName = user.email?.split("@")[0] || null;
 
     const { error: memberError } = await supabase.from("room_members").insert({
       room_id: room.id,
       user_id: user.id,
       current_position: initialPosition,
-      show_spoilers: false,
+      current_position_encoded: initialPositionEncoded,
+      show_spoilers: true, // Default: extra spoiler protection OFF (show all markers)
+      display_name: displayName,
     });
 
     if (memberError) {

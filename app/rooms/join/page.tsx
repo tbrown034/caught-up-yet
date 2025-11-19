@@ -1,20 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Users, ArrowRight } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Users, ArrowRight, UserCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-export default function JoinRoomPage() {
+function JoinRoomContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
   const [shareCode, setShareCode] = useState("");
+  const [guestName, setGuestName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    // Pre-fill code from URL if provided
+    const codeFromUrl = searchParams.get("code");
+    if (codeFromUrl) {
+      const formatted = codeFromUrl
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 6);
+      setShareCode(formatted);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user && !user.is_anonymous);
+      setIsCheckingAuth(false);
+    }
+    checkAuth();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('[CLIENT JOIN] ========== JOIN ATTEMPT START ==========');
+    console.log('[CLIENT JOIN] Share code:', shareCode);
+    console.log('[CLIENT JOIN] Guest name:', guestName);
+    console.log('[CLIENT JOIN] Is authenticated:', isAuthenticated);
+
     if (!shareCode.trim()) {
+      console.log('[CLIENT JOIN] Missing share code');
       setError("Please enter a share code");
+      return;
+    }
+
+    if (!isAuthenticated && !guestName.trim()) {
+      console.log('[CLIENT JOIN] Missing guest name');
+      setError("Please enter your name");
       return;
     }
 
@@ -22,24 +63,47 @@ export default function JoinRoomPage() {
     setError(null);
 
     try {
+      // If not authenticated, sign in anonymously first
+      if (!isAuthenticated) {
+        console.log('[CLIENT JOIN] Signing in anonymously...');
+        const { error: anonError } = await supabase.auth.signInAnonymously();
+        if (anonError) {
+          console.error('[CLIENT JOIN] Anonymous sign-in failed:', anonError);
+          throw new Error("Failed to create guest session");
+        }
+        console.log('[CLIENT JOIN] Anonymous sign-in successful');
+      }
+
+      const requestBody = {
+        share_code: shareCode.trim(),
+        display_name: !isAuthenticated ? guestName.trim() : undefined,
+      };
+
+      console.log('[CLIENT JOIN] Sending join request:', requestBody);
+
       const response = await fetch("/api/rooms/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          share_code: shareCode.trim(),
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('[CLIENT JOIN] Response status:', response.status);
 
       if (!response.ok) {
         const data = await response.json();
+        console.error('[CLIENT JOIN] Join failed:', { status: response.status, error: data });
         throw new Error(data.error || "Failed to join room");
       }
 
       const data = await response.json();
+      console.log('[CLIENT JOIN] Join successful:', { roomId: data.room.id, alreadyMember: data.already_member });
+      console.log('[CLIENT JOIN] Redirecting to room...');
       router.push(`/rooms/${data.room.id}`);
     } catch (err) {
-      console.error("Error joining room:", err);
-      setError(err instanceof Error ? err.message : "Failed to join room");
+      console.error("[CLIENT JOIN] Error joining room:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to join room";
+      console.log('[CLIENT JOIN] Setting error message:', errorMessage);
+      setError(errorMessage);
       setIsJoining(false);
     }
   };
@@ -49,6 +113,14 @@ export default function JoinRoomPage() {
     const formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
     setShareCode(formatted);
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -83,6 +155,29 @@ export default function JoinRoomPage() {
               Enter the 6-character code shared with you
             </p>
           </div>
+
+          {!isAuthenticated && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Name (Guest)
+              </label>
+              <div className="relative">
+                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Enter your name"
+                  maxLength={30}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isJoining}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                This name will be shown to other party members
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -130,5 +225,19 @@ export default function JoinRoomPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function JoinRoomPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      }
+    >
+      <JoinRoomContent />
+    </Suspense>
   );
 }

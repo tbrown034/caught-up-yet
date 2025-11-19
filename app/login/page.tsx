@@ -1,18 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        router.push("/games");
+      } else {
+        setIsChecking(false);
+      }
+    }
+    checkAuth();
+  }, [router, supabase.auth]);
+
   const handleGoogleLogin = async () => {
-    const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: `${location.origin}/auth/callback?next=/games`,
       },
     });
   };
+
+  if (isChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center">

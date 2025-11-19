@@ -1,9 +1,11 @@
 import { fetchAllSportsGames } from "@/lib/espn-api";
-import GamesContainer from "@/components/games/GamesContainer";
+import AuthAwareGamesContainer from "@/components/games/AuthAwareGamesContainer";
 
 export default async function GamesPage() {
   const today = new Date();
   const initialGames = await fetchAllSportsGames(today);
 
-  return <GamesContainer initialGames={initialGames} initialDate={today} />;
+  return (
+    <AuthAwareGamesContainer initialGames={initialGames} initialDate={today} />
+  );
 }

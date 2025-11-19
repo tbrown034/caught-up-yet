@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import type { ESPNGame } from "@/lib/espn-api";
+import { fetchGameScoringPlays } from "@/lib/espn-api";
 import { formatShareCode } from "@/lib/share-code";
+import { createClient } from "@/lib/supabase/client";
+import ShareMenu from "@/components/rooms/ShareMenu";
 
 interface CreateRoomModalProps {
   game: ESPNGame;
@@ -16,25 +19,45 @@ export default function CreateRoomModal({
   onClose,
 }: CreateRoomModalProps) {
   const router = useRouter();
+  const supabase = createClient();
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState("");
+  const [userName, setUserName] = useState("Someone");
 
   const awayTeam = game.competitors[0];
   const homeTeam = game.competitors[1];
+
+  // Get user name
+  useEffect(() => {
+    async function fetchUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserName(user.email.split("@")[0]);
+      }
+    }
+    fetchUser();
+  }, [supabase.auth]);
 
   const handleCreate = async () => {
     setIsCreating(true);
     setError(null);
 
     try {
+      // Fetch scoring plays for real-time score calculation
+      const scoringPlays = await fetchGameScoringPlays(game.id, game.sport);
+
       const response = await fetch("/api/rooms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           game_id: game.id,
           sport: game.sport,
+          name: roomName.trim() || null,
           game_data: {
             homeTeam: homeTeam.team.displayName,
             awayTeam: awayTeam.team.displayName,
@@ -42,6 +65,11 @@ export default function CreateRoomModal({
             awayScore: awayTeam.score,
             status: game.status.type,
             gameDate: game.date,
+            // Include quarter/period/inning scores for spoiler-safe display
+            homeLinescores: homeTeam.linescores || [],
+            awayLinescores: awayTeam.linescores || [],
+            // Include scoring plays for real-time score calculation
+            scoringPlays,
           },
         }),
       });
@@ -69,15 +97,10 @@ export default function CreateRoomModal({
     }
   };
 
-  const copyShareCode = () => {
-    if (shareCode) {
-      navigator.clipboard.writeText(shareCode);
-      // Could add a toast notification here
-    }
-  };
-
   // Show success state with share code
   if (shareCode && roomId) {
+    const gameName = `${awayTeam.team.displayName} @ ${homeTeam.team.displayName}`;
+
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
@@ -90,23 +113,31 @@ export default function CreateRoomModal({
 
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Watch Party Created! 🎉
+              Watch Party Created!
             </h2>
             <p className="text-sm text-gray-600 mb-6">
-              Share this code with your friends and family
+              Invite your friends and family to join
             </p>
 
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-xs text-gray-600 mb-2">Share Code</p>
-              <p className="text-3xl font-bold text-blue-600 tracking-wider mb-3">
+              <p className="text-3xl font-bold text-blue-600 tracking-wider">
                 {formatShareCode(shareCode)}
               </p>
-              <button
-                onClick={copyShareCode}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Copy Code
-              </button>
+            </div>
+
+            {/* Share Menu */}
+            <div className="mb-4 flex justify-center">
+              <ShareMenu
+                shareOptions={{
+                  userName,
+                  shareCode,
+                  roomName: roomName || undefined,
+                  gameName,
+                  sport: game.sport,
+                }}
+                variant="success"
+              />
             </div>
 
             <div className="space-y-3">
@@ -155,6 +186,27 @@ export default function CreateRoomModal({
               month: "long",
               day: "numeric",
             })}
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="roomName"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Party Name (optional)
+          </label>
+          <input
+            id="roomName"
+            type="text"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            placeholder="e.g., Sunday Night Crew"
+            maxLength={100}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Give your watch party a custom name (you can change this later)
           </p>
         </div>
 

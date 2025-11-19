@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isValidPosition } from "@/lib/game-position";
+import { encodePosition, decodePosition } from "@/lib/position-encoding";
 
 // POST /api/messages - Send a message in a room
 export async function POST(request: Request) {
@@ -19,12 +20,12 @@ export async function POST(request: Request) {
 
     // Parse request body
     const body = await request.json();
-    const { room_id, content, position } = body;
+    const { room_id, content, position, position_encoded } = body;
 
-    // Validate required fields
-    if (!room_id || !content || !position) {
+    // Validate required fields - accept either position (JSONB) or position_encoded (integer)
+    if (!room_id || !content || (position === undefined && position_encoded === undefined)) {
       return NextResponse.json(
-        { error: "Missing required fields: room_id, content, position" },
+        { error: "Missing required fields: room_id, content, and (position or position_encoded)" },
         { status: 400 }
       );
     }
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
+    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
+
     // Check if user is a member
     const { data: membership, error: membershipError } = await supabase
       .from("room_members")
@@ -63,24 +66,35 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate position
-    if (
-      !isValidPosition(position, room.sport as "nfl" | "mlb" | "nba" | "nhl")
-    ) {
-      return NextResponse.json(
-        { error: "Invalid position format for this sport" },
-        { status: 400 }
-      );
+    // Determine position data - support both formats
+    let positionJsonb = position;
+    let positionInt = position_encoded;
+
+    if (position_encoded !== undefined && position === undefined) {
+      // Only encoded position provided - decode to JSONB for storage
+      positionJsonb = decodePosition(position_encoded, sport);
+      positionInt = position_encoded;
+    } else if (position !== undefined) {
+      // JSONB position provided - validate and encode
+      if (!isValidPosition(position, sport)) {
+        return NextResponse.json(
+          { error: "Invalid position format for this sport" },
+          { status: 400 }
+        );
+      }
+      positionJsonb = position;
+      positionInt = encodePosition(position, sport);
     }
 
-    // Create message
+    // Create message with both position formats
     const { data: message, error: messageError } = await supabase
       .from("messages")
       .insert({
         room_id,
         user_id: user.id,
         content: content.trim(),
-        position,
+        position: positionJsonb,
+        position_encoded: positionInt,
       })
       .select()
       .single();

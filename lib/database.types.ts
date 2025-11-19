@@ -14,7 +14,7 @@ export type Json =
 // ============================================
 
 export type NflPosition = {
-  quarter: 1 | 2 | 3 | 4;
+  quarter: 1 | 2 | 3 | 4 | 5; // 5 = OT
   minutes: number;
   seconds: number;
 };
@@ -26,13 +26,13 @@ export type MlbPosition = {
 };
 
 export type NbaPosition = {
-  quarter: 1 | 2 | 3 | 4;
+  quarter: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; // 5+ = OT periods
   minutes: number;
   seconds: number;
 };
 
 export type NhlPosition = {
-  period: 1 | 2 | 3;
+  period: 1 | 2 | 3 | 4 | 5; // 4 = OT, 5 = 2OT (playoffs)
   minutes: number;
   seconds: number;
 };
@@ -61,6 +61,7 @@ export interface Database {
           expires_at: string;
           game_data: Json | null;
           is_active: boolean;
+          name: string | null;
         };
         Insert: {
           id?: string;
@@ -72,6 +73,7 @@ export interface Database {
           expires_at: string;
           game_data?: Json | null;
           is_active?: boolean;
+          name?: string | null;
         };
         Update: {
           id?: string;
@@ -83,6 +85,7 @@ export interface Database {
           expires_at?: string;
           game_data?: Json | null;
           is_active?: boolean;
+          name?: string | null;
         };
       };
       room_members: {
@@ -90,25 +93,31 @@ export interface Database {
           room_id: string;
           user_id: string;
           current_position: Json;
+          current_position_encoded: number | null;
           show_spoilers: boolean;
           joined_at: string;
           last_updated: string;
+          display_name: string | null;
         };
         Insert: {
           room_id: string;
           user_id: string;
           current_position?: Json;
+          current_position_encoded?: number | null;
           show_spoilers?: boolean;
           joined_at?: string;
           last_updated?: string;
+          display_name?: string | null;
         };
         Update: {
           room_id?: string;
           user_id?: string;
           current_position?: Json;
+          current_position_encoded?: number | null;
           show_spoilers?: boolean;
           joined_at?: string;
           last_updated?: string;
+          display_name?: string | null;
         };
       };
       messages: {
@@ -118,6 +127,7 @@ export interface Database {
           user_id: string;
           content: string;
           position: Json;
+          position_encoded: number | null;
           created_at: string;
         };
         Insert: {
@@ -126,6 +136,7 @@ export interface Database {
           user_id: string;
           content: string;
           position: Json;
+          position_encoded?: number | null;
           created_at?: string;
         };
         Update: {
@@ -134,6 +145,7 @@ export interface Database {
           user_id?: string;
           content?: string;
           position?: Json;
+          position_encoded?: number | null;
           created_at?: string;
         };
       };
@@ -177,15 +189,42 @@ export type RoomMemberWithUser = RoomMember & {
 };
 
 // ============================================
+// SCORING PLAY TYPE (for real-time score display)
+// ============================================
+
+export type ScoringPlay = {
+  id: string;
+  period: number; // Quarter/Period/Inning number
+  clock: string; // "8:14", "5:55", etc.
+  clockValue: number; // Seconds remaining (for sorting)
+  awayScore: number; // Running total after this play
+  homeScore: number; // Running total after this play
+  description?: string; // "Derrick Henry 5 Yd Run"
+  teamId?: string; // Which team scored
+};
+
+// ============================================
 // GAME DATA TYPE (stored in room.game_data)
 // ============================================
+
+export type GameStatus = {
+  type: string; // "STATUS_SCHEDULED", "STATUS_IN_PROGRESS", "STATUS_FINAL", etc.
+  displayClock?: string; // "8:14", "5:55", etc.
+  period?: number; // Quarter/Period/Inning number
+  detail: string;
+};
 
 export type GameData = {
   homeTeam: string;
   awayTeam: string;
   homeScore?: number;
   awayScore?: number;
-  status?: string;
+  status?: string | GameStatus; // Can be string for backward compatibility or full object
   gameDate?: string;
   venue?: string;
+  // Quarter/Period/Inning scores for spoiler-safe display
+  homeLinescores?: number[]; // [7, 3, 14, 7] for NFL quarters, [2, 0, 1, ...] for MLB innings
+  awayLinescores?: number[];
+  // Scoring plays for real-time score calculation
+  scoringPlays?: ScoringPlay[];
 };

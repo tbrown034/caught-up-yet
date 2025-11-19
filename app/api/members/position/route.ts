@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isValidPosition } from "@/lib/game-position";
+import { encodePosition, decodePosition } from "@/lib/position-encoding";
 
 // PATCH /api/members/position - Update user's position in a room
 export async function PATCH(request: Request) {
@@ -19,7 +20,7 @@ export async function PATCH(request: Request) {
 
     // Parse request body
     const body = await request.json();
-    const { room_id, position, show_spoilers } = body;
+    const { room_id, position, position_encoded, show_spoilers } = body;
 
     if (!room_id) {
       return NextResponse.json(
@@ -39,26 +40,30 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    // Validate position if provided
-    if (position !== undefined) {
-      if (
-        !isValidPosition(position, room.sport as "nfl" | "mlb" | "nba" | "nhl")
-      ) {
+    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
+
+    // Build update object
+    const updates: {
+      current_position?: unknown;
+      current_position_encoded?: number;
+      show_spoilers?: boolean;
+    } = {};
+
+    // Handle position updates - support both formats
+    if (position_encoded !== undefined) {
+      // Encoded integer position provided
+      updates.current_position_encoded = position_encoded;
+      updates.current_position = decodePosition(position_encoded, sport);
+    } else if (position !== undefined) {
+      // JSONB position provided
+      if (!isValidPosition(position, sport)) {
         return NextResponse.json(
           { error: "Invalid position format for this sport" },
           { status: 400 }
         );
       }
-    }
-
-    // Build update object
-    const updates: {
-      current_position?: unknown;
-      show_spoilers?: boolean;
-    } = {};
-
-    if (position !== undefined) {
       updates.current_position = position;
+      updates.current_position_encoded = encodePosition(position, sport);
     }
 
     if (show_spoilers !== undefined) {

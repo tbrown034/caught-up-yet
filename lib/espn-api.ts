@@ -21,6 +21,7 @@ export interface ESPNGame {
     };
     score?: string;
     homeAway: "home" | "away";
+    linescores?: number[]; // Quarter/period/inning scores
   }[];
 }
 
@@ -62,6 +63,10 @@ async function fetchSportGames(sport: Sport, date: Date): Promise<ESPNGame[]> {
       const homeTeam = competition.competitors.find((c: any) => c.homeAway === "home");
       const awayTeam = competition.competitors.find((c: any) => c.homeAway === "away");
 
+      // Extract linescores (quarter/period/inning scores)
+      const homeLinescores = homeTeam.linescores?.map((ls: any) => Number(ls.value)) || [];
+      const awayLinescores = awayTeam.linescores?.map((ls: any) => Number(ls.value)) || [];
+
       return {
         id: event.id,
         name: event.name,
@@ -84,6 +89,7 @@ async function fetchSportGames(sport: Sport, date: Date): Promise<ESPNGame[]> {
             },
             score: awayTeam.score,
             homeAway: "away" as const,
+            linescores: awayLinescores,
           },
           {
             team: {
@@ -94,6 +100,7 @@ async function fetchSportGames(sport: Sport, date: Date): Promise<ESPNGame[]> {
             },
             score: homeTeam.score,
             homeAway: "home" as const,
+            linescores: homeLinescores,
           },
         ],
       };
@@ -115,6 +122,122 @@ export async function fetchAllSportsGames(date: Date): Promise<ESPNGame[]> {
   return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+}
+
+// Scoring play type (matches database.types.ts ScoringPlay)
+interface ESPNScoringPlay {
+  id: string;
+  period: number;
+  clock: string;
+  clockValue: number;
+  awayScore: number;
+  homeScore: number;
+  description?: string;
+  teamId?: string;
+}
+
+/**
+ * Fetch detailed game summary including scoring plays
+ * This provides play-by-play data for real-time score calculation
+ */
+export async function fetchGameScoringPlays(
+  gameId: string,
+  sport: Sport
+): Promise<ESPNScoringPlay[]> {
+  const sportPath = SPORT_PATHS[sport];
+  const url = `${ESPN_BASE_URL}/${sportPath}/summary?event=${gameId}`;
+
+  try {
+    const response = await fetch(url, { next: { revalidate: 60 } });
+    if (!response.ok) {
+      console.error(`Failed to fetch game summary: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+
+    // NFL uses 'scoringPlays', others use 'plays' with scoringPlay flag
+    let plays: any[] = [];
+
+    if (sport === "nfl" && data.scoringPlays) {
+      plays = data.scoringPlays;
+    } else if (data.plays) {
+      // Filter for scoring plays only
+      plays = data.plays.filter((play: any) => play.scoringPlay === true);
+    }
+
+    // Transform to our format
+    return plays.map((play: any) => {
+      // Parse clock value - ESPN gives seconds remaining in different formats
+      let clockValue = 0;
+      if (play.clock?.value !== undefined) {
+        clockValue = play.clock.value;
+      } else if (play.clock?.displayValue) {
+        // Parse "8:14" format
+        const parts = play.clock.displayValue.split(":");
+        if (parts.length === 2) {
+          clockValue = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+      }
+
+      return {
+        id: play.id || "",
+        period: play.period?.number || 1,
+        clock: play.clock?.displayValue || "0:00",
+        clockValue,
+        awayScore: play.awayScore || 0,
+        homeScore: play.homeScore || 0,
+        description: play.text || play.shortText || "",
+        teamId: play.team?.id || "",
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching scoring plays for ${sport} game ${gameId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Fetch live game status for a specific game
+ * Used to update room's live position in real-time
+ */
+export async function fetchGameStatus(
+  gameId: string,
+  sport: Sport
+): Promise<{
+  type: string;
+  displayClock?: string;
+  period?: number;
+  detail: string;
+} | null> {
+  const sportPath = SPORT_PATHS[sport];
+  const url = `${ESPN_BASE_URL}/${sportPath}/summary?event=${gameId}`;
+
+  try {
+    const response = await fetch(url, { next: { revalidate: 0 } }); // No cache for live data
+    if (!response.ok) {
+      console.error(`Failed to fetch game status: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.header?.competitions?.[0]?.status) {
+      return null;
+    }
+
+    const status = data.header.competitions[0].status;
+
+    return {
+      type: status.type?.name || "",
+      displayClock: status.displayClock,
+      period: status.period,
+      detail: status.type?.detail || "",
+    };
+  } catch (error) {
+    console.error(`Error fetching game status for ${sport} game ${gameId}:`, error);
+    return null;
+  }
 }
 
 export { fetchSportGames };

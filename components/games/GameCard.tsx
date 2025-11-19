@@ -3,15 +3,20 @@
 import { useState } from "react";
 import { ESPNGame } from "@/lib/espn-api";
 import Image from "next/image";
-import { Users } from "lucide-react";
+import { Users, Eye, EyeOff } from "lucide-react";
 import CreateRoomModal from "@/components/rooms/CreateRoomModal";
 
 interface GameCardProps {
   game: ESPNGame;
+  spoilerProtection?: boolean;
 }
 
-export default function GameCard({ game }: GameCardProps) {
+export default function GameCard({ game, spoilerProtection = true }: GameCardProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [revealedScores, setRevealedScores] = useState<{ away: boolean; home: boolean }>({
+    away: false,
+    home: false,
+  });
   const awayTeam = game.competitors[0];
   const homeTeam = game.competitors[1];
   const isLive = game.status.type === "STATUS_IN_PROGRESS";
@@ -22,6 +27,59 @@ export default function GameCard({ game }: GameCardProps) {
     minute: "2-digit",
     timeZoneName: "short",
   });
+
+  const handleToggleScore = (team: 'away' | 'home') => {
+    setRevealedScores(prev => ({ ...prev, [team]: !prev[team] }));
+  };
+
+  const shouldHideScore = spoilerProtection && (isLive || isFinal);
+
+  const ScoreDisplay = ({ score, team }: { score: string | undefined, team: 'away' | 'home' }) => {
+    if (!score) return null;
+
+    const isRevealed = revealedScores[team];
+
+    // If protection is off, just show the score
+    if (!shouldHideScore) {
+      return (
+        <span className="text-2xl font-bold text-gray-900">
+          {score}
+        </span>
+      );
+    }
+
+    // If revealed, show score with hide button
+    if (isRevealed) {
+      return (
+        <button
+          onClick={() => handleToggleScore(team)}
+          className="group flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded transition-colors"
+          title="Click to hide score"
+        >
+          <span className="text-2xl font-bold text-gray-900">
+            {score}
+          </span>
+          <EyeOff className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
+        </button>
+      );
+    }
+
+    // Hidden state - show redacted bars
+    return (
+      <button
+        onClick={() => handleToggleScore(team)}
+        className="group relative flex items-center gap-2 px-3 py-2 bg-gray-900 hover:bg-gray-800 rounded transition-colors"
+        title="Click to reveal score"
+      >
+        <div className="flex gap-1">
+          <div className="w-1.5 h-5 bg-gray-700 group-hover:bg-gray-600 rounded"></div>
+          <div className="w-1.5 h-5 bg-gray-700 group-hover:bg-gray-600 rounded"></div>
+          <div className="w-1.5 h-5 bg-gray-700 group-hover:bg-gray-600 rounded"></div>
+        </div>
+        <Eye className="w-4 h-4 text-gray-500 group-hover:text-gray-400" />
+      </button>
+    );
+  };
 
   return (
     <>
@@ -67,11 +125,7 @@ export default function GameCard({ game }: GameCardProps) {
                 </p>
               </div>
             </div>
-            {awayTeam.score && (
-              <span className="text-2xl font-bold text-gray-900">
-                {awayTeam.score}
-              </span>
-            )}
+            <ScoreDisplay score={awayTeam.score} team="away" />
           </div>
 
           {/* Home Team */}
@@ -93,11 +147,7 @@ export default function GameCard({ game }: GameCardProps) {
                 </p>
               </div>
             </div>
-            {homeTeam.score && (
-              <span className="text-2xl font-bold text-gray-900">
-                {homeTeam.score}
-              </span>
-            )}
+            <ScoreDisplay score={homeTeam.score} team="home" />
           </div>
         </div>
 
