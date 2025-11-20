@@ -10,12 +10,14 @@ import {
   percentageToPosition,
 } from "@/lib/position-encoding";
 import { getScoreAtPosition } from "@/lib/score-calculator";
+import type { MessageMarkers } from "./BoxScorePosition";
 
 interface NhlBoxScoreProps {
   positionEncoded: number;
   onChange: (newPositionEncoded: number) => void;
   gameData: GameData;
   messagePositions?: number[];
+  messageMarkers?: MessageMarkers;
   livePositionEncoded?: number | null;
 }
 
@@ -24,6 +26,7 @@ export default function NhlBoxScore({
   onChange,
   gameData,
   messagePositions = [],
+  messageMarkers,
   livePositionEncoded = null,
 }: NhlBoxScoreProps) {
   const fullGameTrackRef = useRef<HTMLDivElement>(null);

@@ -211,7 +211,7 @@ export type GameStatus = {
   type: string; // "STATUS_SCHEDULED", "STATUS_IN_PROGRESS", "STATUS_FINAL", etc.
   displayClock?: string; // "8:14", "5:55", etc.
   period?: number; // Quarter/Period/Inning number
-  detail: string;
+  detail?: string;
 };
 
 export type GameData = {

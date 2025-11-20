@@ -79,16 +79,25 @@ export async function GET(
 
     // Get all reactions for these messages
     const messageIds = (messages || []).map(m => m.id);
+    console.log('[ROOM] Fetching reactions for', messageIds.length, 'messages');
+
     const { data: reactions, error: reactionsError } = await supabase
       .from("message_reactions")
-      .select("*, room_members!inner(display_name)")
+      .select("*")
       .in("message_id", messageIds);
 
     if (reactionsError) {
-      console.error("Error fetching reactions:", reactionsError);
+      console.error("[ROOM] Error fetching reactions:", reactionsError);
+    } else {
+      console.log('[ROOM] Fetched', reactions?.length || 0, 'reactions');
     }
 
-    // Group reactions by message and type
+    // Create a map of user_id to display_name from members
+    const memberDisplayNames = new Map(
+      (members || []).map(m => [m.user_id, m.display_name || "Member"])
+    );
+
+    // Group reactions by message and type, enriching with display names
     const reactionsByMessage = (reactions || []).reduce((acc, reaction) => {
       if (!acc[reaction.message_id]) {
         acc[reaction.message_id] = {
@@ -100,7 +109,7 @@ export async function GET(
       }
       acc[reaction.message_id][reaction.reaction_type].push({
         user_id: reaction.user_id,
-        display_name: reaction.room_members.display_name,
+        display_name: memberDisplayNames.get(reaction.user_id) || "Member",
         is_current_user: reaction.user_id === user.id
       });
       return acc;

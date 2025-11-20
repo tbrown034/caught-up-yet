@@ -10,12 +10,14 @@ import {
   percentageToPosition,
 } from "@/lib/position-encoding";
 import { getScoreAtPosition } from "@/lib/score-calculator";
+import type { MessageMarkers } from "./BoxScorePosition";
 
 interface MlbBoxScoreProps {
   positionEncoded: number;
   onChange: (newPositionEncoded: number) => void;
   gameData: GameData;
   messagePositions?: number[];
+  messageMarkers?: MessageMarkers;
   livePositionEncoded?: number | null;
 }
 
@@ -24,6 +26,7 @@ export default function MlbBoxScore({
   onChange,
   gameData,
   messagePositions = [],
+  messageMarkers,
   livePositionEncoded = null,
 }: MlbBoxScoreProps) {
   const fullGameTrackRef = useRef<HTMLDivElement>(null);

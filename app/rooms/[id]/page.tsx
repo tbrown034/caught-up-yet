@@ -29,13 +29,8 @@ interface MessageReactions {
 }
 
 interface ExtendedMessage extends Message {
-  position_encoded?: number;
   sender_display_name?: string | null;
   reactions?: MessageReactions;
-}
-
-interface ExtendedMember extends RoomMember {
-  display_name?: string | null;
 }
 
 export default function RoomPage({
@@ -49,7 +44,7 @@ export default function RoomPage({
 
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
-  const [members, setMembers] = useState<ExtendedMember[]>([]);
+  const [members, setMembers] = useState<RoomMember[]>([]);
   const [currentPositionEncoded, setCurrentPositionEncoded] = useState<number>(0);
   const [showSpoilers, setShowSpoilers] = useState(true); // Default: OFF (true = show all markers)
   const [memberCount, setMemberCount] = useState(0);
@@ -230,6 +225,7 @@ export default function RoomPage({
           filter: `room_id=eq.${id}`,
         },
         (payload) => {
+          console.log('[REALTIME] New message received:', payload.new);
           // Add new message to state with sender display name
           const newMessage = payload.new as ExtendedMessage;
 
@@ -247,10 +243,16 @@ export default function RoomPage({
               },
             };
 
+            console.log('[REALTIME] Enriched message:', enrichedMessage);
+
             // Deduplicate: only add if not already in messages
             setMessages((prev) => {
               const exists = prev.some((msg) => msg.id === enrichedMessage.id);
-              if (exists) return prev;
+              if (exists) {
+                console.log('[REALTIME] Message already exists, skipping:', enrichedMessage.id);
+                return prev;
+              }
+              console.log('[REALTIME] Adding new message to state');
               return [...prev, enrichedMessage];
             });
             return currentMembers; // Don't change members
@@ -310,7 +312,8 @@ export default function RoomPage({
           schema: "public",
           table: "message_reactions",
         },
-        () => {
+        (payload) => {
+          console.log('[REALTIME] Reaction change detected:', payload.eventType, payload.new);
           // Refetch room data when reactions change
           // This will update all messages with new reaction counts
           fetchRoomData();
@@ -498,7 +501,16 @@ export default function RoomPage({
   // When spoiler protection is OFF (showSpoilers = true), show all markers with colors
   // When spoiler protection is ON (showSpoilers = false), only show past markers
   const messageMarkers = useMemo(() => {
-    if (!room || !userId) return { own: [], others: [] };
+    if (!room || !userId) {
+      return {
+        own: [],
+        others: [],
+        ownPast: [],
+        ownFuture: [],
+        othersPast: [],
+        othersFuture: [],
+      };
+    }
 
     const ownPast: number[] = [];
     const ownFuture: number[] = [];
@@ -820,6 +832,18 @@ export default function RoomPage({
             roomId={id}
             currentPositionEncoded={currentPositionEncoded}
             sport={sport}
+            onMessageSent={(message) => {
+              console.log('[OPTIMISTIC] Adding message to local state:', message.id);
+              setMessages((prev) => {
+                // Check if message already exists (shouldn't, but safety check)
+                const exists = prev.some((msg) => msg.id === message.id);
+                if (exists) {
+                  console.log('[OPTIMISTIC] Message already exists, skipping');
+                  return prev;
+                }
+                return [...prev, message];
+              });
+            }}
           />
         )}
 
@@ -831,7 +855,46 @@ export default function RoomPage({
             sport={sport}
             showSpoilers={showSpoilers}
             currentUserId={userId}
+            currentUserDisplayName={userName}
             scoringPlays={scoringPlays}
+            onReactionToggled={(messageId, reactionType, action) => {
+              console.log('[OPTIMISTIC] Updating reaction locally:', { messageId, reactionType, action });
+              setMessages((prev) =>
+                prev.map((msg) => {
+                  if (msg.id !== messageId) return msg;
+
+                  const reactions = msg.reactions ? { ...msg.reactions } : {
+                    thumbs_up: [],
+                    thumbs_down: [],
+                    question: [],
+                    exclamation: [],
+                  };
+
+                  const reactionArray = reactions[reactionType as keyof MessageReactions] || [];
+
+                  if (action === "added") {
+                    // Add current user to reaction
+                    if (!reactionArray.some((u) => u.is_current_user)) {
+                      reactions[reactionType as keyof MessageReactions] = [
+                        ...reactionArray,
+                        {
+                          user_id: userId,
+                          display_name: userName,
+                          is_current_user: true,
+                        },
+                      ];
+                    }
+                  } else {
+                    // Remove current user from reaction
+                    reactions[reactionType as keyof MessageReactions] = reactionArray.filter(
+                      (u) => !u.is_current_user
+                    );
+                  }
+
+                  return { ...msg, reactions };
+                })
+              );
+            }}
           />
         )}
       </div>
@@ -844,10 +907,12 @@ function MessageComposerEnhanced({
   roomId,
   currentPositionEncoded,
   sport,
+  onMessageSent,
 }: {
   roomId: string;
   currentPositionEncoded: number;
   sport: "nfl" | "mlb" | "nba" | "nhl";
+  onMessageSent: (message: ExtendedMessage) => void;
 }) {
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -855,6 +920,7 @@ function MessageComposerEnhanced({
   const handleSend = async () => {
     if (!content.trim() || isSending) return;
 
+    console.log('[MESSAGE] Sending message:', { content: content.trim(), position_encoded: currentPositionEncoded });
     setIsSending(true);
     try {
       const response = await fetch("/api/messages", {
@@ -868,14 +934,29 @@ function MessageComposerEnhanced({
       });
 
       if (!response.ok) {
+        console.error('[MESSAGE] Failed to send, status:', response.status);
         throw new Error("Failed to send message");
       }
 
+      const data = await response.json();
+      console.log('[MESSAGE] Message sent successfully:', data);
+
+      // OPTIMISTIC UPDATE: Add message to local state immediately
+      const newMessage: ExtendedMessage = {
+        ...data.message,
+        sender_display_name: "You",
+        reactions: {
+          thumbs_up: [],
+          thumbs_down: [],
+          question: [],
+          exclamation: [],
+        },
+      };
+      onMessageSent(newMessage);
+
       setContent("");
-      // Message will appear via Postgres Changes real-time subscription
-      // No need to manually refetch - saves position from jumping back!
     } catch (err) {
-      console.error("Error sending message:", err);
+      console.error("[MESSAGE] Error sending message:", err);
       alert("Failed to send message. Please try again.");
     } finally {
       setIsSending(false);
@@ -979,19 +1060,24 @@ function MessageFeedEnhanced({
   sport,
   showSpoilers,
   currentUserId,
+  currentUserDisplayName,
   scoringPlays,
+  onReactionToggled,
 }: {
   messages: ExtendedMessage[];
   currentPositionEncoded: number;
   sport: "nfl" | "mlb" | "nba" | "nhl";
   showSpoilers: boolean;
   currentUserId: string;
+  currentUserDisplayName: string;
   scoringPlays: ScoringPlay[];
+  onReactionToggled: (messageId: string, reactionType: string, action: "added" | "removed") => void;
 }) {
   const toggleReaction = async (
     messageId: string,
     reactionType: string
   ) => {
+    console.log('[REACTION] Toggling reaction:', { messageId, reactionType });
     try {
       const response = await fetch(`/api/messages/${messageId}/reactions`, {
         method: "POST",
@@ -1000,11 +1086,17 @@ function MessageFeedEnhanced({
       });
 
       if (!response.ok) {
-        console.error("Failed to toggle reaction");
+        console.error("[REACTION] Failed to toggle, status:", response.status);
+        return;
       }
-      // Realtime will handle the update
+
+      const data = await response.json();
+      console.log('[REACTION] Toggle successful:', data);
+
+      // OPTIMISTIC UPDATE: Update local state immediately
+      onReactionToggled(messageId, reactionType, data.action);
     } catch (err) {
-      console.error("Error toggling reaction:", err);
+      console.error("[REACTION] Error toggling reaction:", err);
     }
   };
   // Messages are ALWAYS filtered to only show at or before current position
@@ -1101,7 +1193,7 @@ function MessageFeedEnhanced({
                     </span>
                     {scoreAtPosition && (
                       <span className="text-xs px-2 py-0.5 bg-gray-100 rounded font-mono text-gray-600">
-                        {scoreAtPosition.away}-{scoreAtPosition.home}
+                        {scoreAtPosition.awayScore}-{scoreAtPosition.homeScore}
                       </span>
                     )}
                   </div>
