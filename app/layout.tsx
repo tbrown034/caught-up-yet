@@ -6,6 +6,7 @@ import { inter, outfit, jetbrainsMono } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://caught-up-yet.vercel.app"),
   title: "Caught Up Yet",
   description: "Watch Games Together, But No Spoilers",
 };
