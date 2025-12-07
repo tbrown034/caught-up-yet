@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
+    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb";
 
     // Check if user is a member
     const { data: membership, error: membershipError } = await supabase

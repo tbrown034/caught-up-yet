@@ -23,7 +23,7 @@ interface Score {
 export function getScoreAtPosition(
   scoringPlays: ScoringPlay[] | undefined,
   positionEncoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): Score {
   // No scoring plays = score is 0-0
   if (!scoringPlays || scoringPlays.length === 0) {
@@ -63,10 +63,11 @@ interface PositionForComparison {
  */
 function decodePositionForComparison(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): PositionForComparison {
   switch (sport) {
-    case "nfl": {
+    case "nfl":
+    case "cfb": {
       // NFL: 900 positions per quarter (15 min = 900 sec)
       const quarter = Math.min(Math.floor(encoded / 900) + 1, 4);
       const secondsElapsed = encoded % 900;
@@ -107,7 +108,7 @@ function decodePositionForComparison(
 function isPlayBeforePosition(
   play: ScoringPlay,
   userPosition: PositionForComparison,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): boolean {
   // If play is in an earlier period, it's before
   if (play.period < userPosition.period) {
@@ -142,7 +143,7 @@ function isPlayBeforePosition(
 export function getScoringPlaysUpToPosition(
   scoringPlays: ScoringPlay[] | undefined,
   positionEncoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): ScoringPlay[] {
   if (!scoringPlays || scoringPlays.length === 0) {
     return [];

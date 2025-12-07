@@ -57,10 +57,10 @@ export async function POST(request: Request) {
     }
 
     // Validate sport
-    const validSports = ["nfl", "mlb", "nba", "nhl"];
+    const validSports = ["nfl", "mlb", "nba", "nhl", "cfb"];
     if (!validSports.includes(sport)) {
       return NextResponse.json(
-        { error: "Invalid sport. Must be: nfl, mlb, nba, or nhl" },
+        { error: "Invalid sport. Must be: nfl, mlb, nba, nhl, or cfb" },
         { status: 400 }
       );
     }
@@ -122,10 +122,10 @@ export async function POST(request: Request) {
 
     // Add creator as first member
     const initialPosition = getInitialPosition(
-      sport as "nfl" | "mlb" | "nba" | "nhl"
+      sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
     const initialPositionEncoded = getInitialEncodedPosition(
-      sport as "nfl" | "mlb" | "nba" | "nhl"
+      sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
 
     // Get display name from email

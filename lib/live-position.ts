@@ -19,7 +19,7 @@ function parseClock(clock: string): { minutes: number; seconds: number } {
  */
 export function calculateLivePosition(
   status: GameStatus,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number | null {
   // Game hasn't started
   if (status.type === "STATUS_SCHEDULED" || status.type === "PRE") {
@@ -31,7 +31,8 @@ export function calculateLivePosition(
     // Return end of game position
     switch (sport) {
       case "nfl":
-        return encodePosition({ quarter: 5, minutes: 0, seconds: 0 }, "nfl");
+      case "cfb":
+        return encodePosition({ quarter: 5, minutes: 0, seconds: 0 }, sport);
       case "nba":
         return encodePosition({ quarter: 4, minutes: 0, seconds: 0 }, "nba");
       case "nhl":
@@ -48,14 +49,15 @@ export function calculateLivePosition(
 
   try {
     switch (sport) {
-      case "nfl": {
+      case "nfl":
+      case "cfb": {
         const { minutes, seconds } = parseClock(status.displayClock);
         const position: NflPosition = {
           quarter: Math.min(5, status.period) as 1 | 2 | 3 | 4 | 5,
           minutes,
           seconds,
         };
-        return encodePosition(position, "nfl");
+        return encodePosition(position, sport);
       }
 
       case "nba": {

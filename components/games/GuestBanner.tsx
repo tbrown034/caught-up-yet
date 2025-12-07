@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, LogIn, ArrowRight, Info } from "lucide-react";
+import { UserGroupIcon, ArrowRightEndOnRectangleIcon, ArrowRightIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/ui/Button";
 
 export default function GuestBanner() {
@@ -24,12 +24,12 @@ export default function GuestBanner() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
+    <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
       <div className="grid md:grid-cols-2 gap-6">
         {/* Join with Code */}
         <div className="bg-white rounded-lg p-5 border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
-            <Users className="w-5 h-5 text-blue-600" />
+            <UserGroupIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-semibold text-gray-900">Have a Share Code?</h3>
           </div>
           <p className="text-sm text-gray-600 mb-4">
@@ -49,7 +49,7 @@ export default function GuestBanner() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1"
             >
               Join
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function GuestBanner() {
         {/* Sign In Prompt */}
         <div className="bg-white rounded-lg p-5 border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
-            <LogIn className="w-5 h-5 text-green-600" />
+            <ArrowRightEndOnRectangleIcon className="w-5 h-5 text-green-600" />
             <h3 className="font-semibold text-gray-900">Want to Create Parties?</h3>
           </div>
           <p className="text-sm text-gray-600 mb-4">
@@ -71,7 +71,7 @@ export default function GuestBanner() {
 
       {/* Info note */}
       <div className="flex items-start gap-2 mt-4 text-xs text-gray-600">
-        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <InformationCircleIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
           <strong>Guests</strong> can join existing parties with a share code.{" "}
           <strong>Signed-in users</strong> can create parties, track history, and

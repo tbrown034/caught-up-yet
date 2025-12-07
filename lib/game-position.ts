@@ -106,13 +106,14 @@ export function compareNhlPositions(
 export function isMessageVisible(
   messagePosition: GamePosition,
   userPosition: GamePosition,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): boolean {
   try {
     let comparison: -1 | 0 | 1;
 
     switch (sport) {
       case "nfl":
+      case "cfb": // College football uses same format as NFL
         comparison = compareNflPositions(
           messagePosition as NflPosition,
           userPosition as NflPosition
@@ -198,10 +199,11 @@ export function formatNhlPosition(pos: NhlPosition): string {
  */
 export function formatGamePosition(
   pos: GamePosition,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): string {
   switch (sport) {
     case "nfl":
+    case "cfb": // College football uses same format as NFL
       return formatNflPosition(pos as NflPosition);
     case "mlb":
       return formatMlbPosition(pos as MlbPosition);
@@ -231,10 +233,11 @@ function getOrdinal(n: number): string {
  * Get initial position for a sport (game start)
  */
 export function getInitialPosition(
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): GamePosition {
   switch (sport) {
     case "nfl":
+    case "cfb": // College football uses same format as NFL
       return { quarter: 1, minutes: 15, seconds: 0 } as NflPosition;
     case "mlb":
       return { inning: 1, half: "TOP", outs: 0 } as MlbPosition;
@@ -252,13 +255,14 @@ export function getInitialPosition(
  */
 export function isValidPosition(
   pos: unknown,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): boolean {
   if (!pos || typeof pos !== "object") return false;
 
   try {
     switch (sport) {
-      case "nfl": {
+      case "nfl":
+      case "cfb": {
         const nflPos = pos as NflPosition;
         return (
           typeof nflPos.quarter === "number" &&

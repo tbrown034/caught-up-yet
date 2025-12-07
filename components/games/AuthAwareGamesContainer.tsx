@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ESPNGame, Sport, fetchAllSportsGames } from "@/lib/espn-api";
-import { Eye, EyeOff } from "lucide-react";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import DateNavigation from "./DateNavigation";
 import SportTabs from "./SportTabs";
 import GameCard from "./GameCard";
@@ -72,6 +72,7 @@ export default function AuthAwareGamesContainer({
     mlb: games.filter((g) => g.sport === "mlb").length,
     nba: games.filter((g) => g.sport === "nba").length,
     nhl: games.filter((g) => g.sport === "nhl").length,
+    cfb: games.filter((g) => g.sport === "cfb").length,
   };
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
@@ -102,9 +103,9 @@ export default function AuthAwareGamesContainer({
         <div className="inline-flex items-center gap-3 px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
             {spoilerProtection ? (
-              <EyeOff className="w-5 h-5 text-blue-600" />
+              <EyeSlashIcon className="w-5 h-5 text-blue-600" />
             ) : (
-              <Eye className="w-5 h-5 text-gray-500" />
+              <EyeIcon className="w-5 h-5 text-gray-500" />
             )}
             <span className="text-sm font-semibold text-gray-900">
               Spoiler Protection

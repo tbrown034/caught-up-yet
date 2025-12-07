@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Users, ArrowRight, UserCircle } from "lucide-react";
+import { UserGroupIcon, ArrowRightIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { createClient } from "@/lib/supabase/client";
 
 function JoinRoomContent() {
@@ -127,7 +127,7 @@ function JoinRoomContent() {
       <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <Users className="w-8 h-8 text-blue-600" />
+            <UserGroupIcon className="w-8 h-8 text-blue-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Join Watch Party
@@ -162,7 +162,7 @@ function JoinRoomContent() {
                 Your Name (Guest)
               </label>
               <div className="relative">
-                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   value={guestName}
@@ -196,7 +196,7 @@ function JoinRoomContent() {
               ) : (
                 <>
                   Join Watch Party
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRightIcon className="w-5 h-5" />
                 </>
               )}
             </button>

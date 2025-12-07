@@ -1,6 +1,6 @@
 "use client";
 
-import { Play } from "lucide-react";
+import { PlayIcon } from "@heroicons/react/24/solid";
 import AuthAwareButton from "@/components/ui/AuthAwareButton";
 import Button from "@/components/ui/Button";
 
@@ -14,16 +14,16 @@ export default function HeroCTA() {
           variant="primary"
           size="lg"
         >
-          <Play className="w-5 h-5 mr-2" />
-          Get Started Free
+          <PlayIcon className="w-5 h-5 mr-2" />
+          Get Started
         </AuthAwareButton>
         <Button variant="ghost" size="lg" href="/about" asLink>
           Learn More
         </Button>
       </div>
 
-      <p className="text-sm text-gray-500 mt-6">
-        No credit card required • Free for small groups
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
+        Free to use
       </p>
     </>
   );

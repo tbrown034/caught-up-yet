@@ -162,10 +162,10 @@ export async function POST(request: Request) {
     // Add user as member
     console.log('[JOIN] Adding user as new member...');
     const initialPosition = getInitialPosition(
-      room.sport as "nfl" | "mlb" | "nba" | "nhl"
+      room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
     const initialPositionEncoded = getInitialEncodedPosition(
-      room.sport as "nfl" | "mlb" | "nba" | "nhl"
+      room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
 
     console.log('[JOIN] Initial position:', { sport: room.sport, position: initialPosition, encoded: initialPositionEncoded });

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Users, Plus, Trophy, UserPlus } from "lucide-react";
+import { UserGroupIcon, PlusIcon, TrophyIcon, UserPlusIcon } from "@heroicons/react/24/outline";
 import type { Room } from "@/lib/database.types";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-blue-600" />
+                <TrophyIcon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{roomsCreated}</p>
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-green-600" />
+                <UserPlusIcon className="w-5 h-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{roomsJoined}</p>
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
+                <UserGroupIcon className="w-5 h-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{userRooms.length}</p>
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
             href="/games"
             className="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg transition-colors flex items-center gap-4"
           >
-            <Plus className="w-8 h-8" />
+            <PlusIcon className="w-8 h-8" />
             <div className="text-left">
               <p className="font-semibold text-lg">Create Watch Party</p>
               <p className="text-sm text-blue-100">Browse games and start a party</p>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
             href="/rooms/join"
             className="bg-white hover:bg-gray-50 border-2 border-blue-600 text-blue-600 p-6 rounded-lg transition-colors flex items-center gap-4"
           >
-            <Users className="w-8 h-8" />
+            <UserGroupIcon className="w-8 h-8" />
             <div className="text-left">
               <p className="font-semibold text-lg">Join Watch Party</p>
               <p className="text-sm text-gray-600">Enter a share code</p>
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
 
           {userRooms.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <UserGroupIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">No watch parties yet</p>
               <p className="text-sm text-gray-500 mb-4">
                 Create a watch party or join one with a share code

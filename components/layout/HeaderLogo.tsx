@@ -5,10 +5,12 @@ export default function HeaderLogo() {
   return (
     <a
       href="/"
-      className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+      className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
     >
-      <BrandIcon size={40} />
-      <h1 className="text-2xl font-bold text-gray-900">{SITE_CONFIG.name}?</h1>
+      <BrandIcon size={36} />
+      <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+        {SITE_CONFIG.name}<span className="text-blue-600 dark:text-blue-400">?</span>
+      </span>
     </a>
   );
 }

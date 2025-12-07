@@ -1,4 +1,4 @@
-export type Sport = "nfl" | "mlb" | "nba" | "nhl";
+export type Sport = "nfl" | "mlb" | "nba" | "nhl" | "cfb";
 
 export interface ESPNGame {
   id: string;
@@ -32,6 +32,7 @@ const SPORT_PATHS = {
   mlb: "baseball/mlb",
   nba: "basketball/nba",
   nhl: "hockey/nhl",
+  cfb: "football/college-football",
 } as const;
 
 function formatDateForAPI(date: Date): string {
@@ -111,15 +112,33 @@ async function fetchSportGames(sport: Sport, date: Date): Promise<ESPNGame[]> {
   }
 }
 
+// Big Ten conference team abbreviations for filtering CFB games
+const BIG_TEN_TEAMS = new Set([
+  "MICH", "OSU", "PSU", "ORE", "IOWA", "WIS", "MINN", "NEB", "ILL", "IU",
+  "PUR", "NW", "MSU", "MD", "RUTG", "UCLA", "USC", "WASH",
+  // Alternative abbreviations
+  "OHIO ST", "PENN ST", "OREGON", "INDIANA", "PURDUE", "NORTHWESTERN",
+  "MICHIGAN ST", "MARYLAND", "RUTGERS", "MICHIGAN", "WISCONSIN", "MINNESOTA",
+  "NEBRASKA", "ILLINOIS", "WASHINGTON"
+]);
+
+function isBigTenGame(game: ESPNGame): boolean {
+  return game.competitors.some((c) => BIG_TEN_TEAMS.has(c.team.abbreviation.toUpperCase()));
+}
+
 export async function fetchAllSportsGames(date: Date): Promise<ESPNGame[]> {
-  const [nflGames, mlbGames, nbaGames, nhlGames] = await Promise.all([
+  const [nflGames, mlbGames, nbaGames, nhlGames, cfbGames] = await Promise.all([
     fetchSportGames("nfl", date),
     fetchSportGames("mlb", date),
     fetchSportGames("nba", date),
     fetchSportGames("nhl", date),
+    fetchSportGames("cfb", date),
   ]);
 
-  return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames].sort(
+  // Filter CFB to only Big Ten games
+  const bigTenGames = cfbGames.filter(isBigTenGame);
+
+  return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames, ...bigTenGames].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 }

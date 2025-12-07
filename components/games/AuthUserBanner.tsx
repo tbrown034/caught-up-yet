@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, ArrowRight } from "lucide-react";
+import { UserGroupIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 
 export default function AuthUserBanner() {
   const router = useRouter();
@@ -28,11 +28,11 @@ export default function AuthUserBanner() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
+    <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg p-5 border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
-            <Users className="w-5 h-5 text-blue-600" />
+            <UserGroupIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-semibold text-gray-900">Join a Watch Party</h3>
           </div>
           <p className="text-sm text-gray-600 mb-4">
@@ -53,7 +53,7 @@ export default function AuthUserBanner() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1"
             >
               Join
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-3">

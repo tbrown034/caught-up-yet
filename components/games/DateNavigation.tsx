@@ -1,7 +1,7 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
 interface DateNavigationProps {
   selectedDate: Date;
@@ -50,7 +50,7 @@ export default function DateNavigation({
         onClick={goToPreviousDay}
         className="flex items-center gap-2"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeftIcon className="w-4 h-4" />
         Previous
       </Button>
 
@@ -75,7 +75,7 @@ export default function DateNavigation({
         className="flex items-center gap-2"
       >
         Next
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRightIcon className="w-4 h-4" />
       </Button>
     </div>
   );

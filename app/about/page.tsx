@@ -1,250 +1,193 @@
 import { SITE_CONFIG } from "@/constants/site";
 import Button from "@/components/ui/Button";
-import { Target, Zap, Lock, FileText, Cookie, Mail } from "lucide-react";
+import HowItWorksDemo from "@/components/about/HowItWorksDemo";
+import {
+  PlayIcon,
+  LockClosedIcon,
+  DocumentTextIcon,
+  FingerPrintIcon,
+  EnvelopeIcon,
+} from "@heroicons/react/24/outline";
 
 const sections = [
-  { id: "mission", label: "Our Mission" },
   { id: "how-it-works", label: "How It Works" },
-  { id: "privacy", label: "Privacy Policy" },
-  { id: "terms", label: "Terms of Service" },
-  { id: "data-cookies", label: "Data & Cookies" },
+  { id: "privacy", label: "Privacy" },
+  { id: "terms", label: "Terms" },
+  { id: "data", label: "Data & Cookies" },
   { id: "contact", label: "Contact" },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Mobile Horizontal Navigation */}
-      <nav className="lg:hidden mb-8">
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Quick Navigation
-          </h2>
-          <div className="flex flex-wrap gap-2">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            About {SITE_CONFIG.name}
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            {SITE_CONFIG.tagline}
+          </p>
+        </div>
+
+        {/* Quick Nav */}
+        <nav className="mb-12">
+          <div className="flex flex-wrap justify-center gap-2">
             {sections.map((section) => (
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-700 border border-gray-200 rounded-md transition-all shadow-sm"
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
               >
                 {section.label}
               </a>
             ))}
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      <div className="flex gap-8">
-        {/* Desktop Sidebar Navigation */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <nav className="sticky top-20">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                On This Page
+        {/* How It Works - Interactive Demo */}
+        <section id="how-it-works" className="mb-16 scroll-mt-20">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <PlayIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                How It Works
               </h2>
-              <div className="space-y-1">
-                {sections.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    className="block px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
-                  >
-                    {section.label}
-                  </a>
-                ))}
-              </div>
             </div>
-          </nav>
-        </aside>
 
-        {/* Main Content */}
-        <div className="flex-1 max-w-3xl lg:max-w-none">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">
-              About {SITE_CONFIG.name}
-            </h1>
-            <p className="text-lg text-gray-600">{SITE_CONFIG.tagline}</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-3xl">
+              Everyone in your watch party tracks their position in the game.
+              Messages are tagged with the game moment they were sent.
+              You only see messages from moments you've already watched.
+            </p>
+
+            <HowItWorksDemo />
           </div>
+        </section>
 
-          <div className="prose prose-lg max-w-none">
-            <section id="mission" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Target className="text-blue-600" size={24} />
-                  Our Mission
-                </h2>
-                <p className="text-gray-700 leading-relaxed">
-                  Watch games together without the fear of spoilers.{" "}
-                  {SITE_CONFIG.name} helps you sync up with friends and family
-                  to enjoy sports and events at your own pace, ensuring everyone
-                  stays on the same page without ruining the excitement.
-                </p>
+        {/* Privacy */}
+        <section id="privacy" className="mb-8 scroll-mt-20">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <LockClosedIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-            </section>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Privacy</h2>
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 space-y-3">
+              <p>We collect only what's needed to run the service:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Account info (email, name) when you sign in</li>
+                <li>Watch party data and your game progress</li>
+                <li>Basic analytics to improve the service</li>
+              </ul>
+              <p>
+                We never sell your data. Your watch history is private and only
+                shared with members of parties you join.
+              </p>
+            </div>
+          </div>
+        </section>
 
-            <section id="how-it-works" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Zap className="text-blue-600" size={24} />
-                  How It Works
-                </h2>
-                <p className="text-gray-700 leading-relaxed">
-                  Create a watch party, invite your friends, and everyone can
-                  track their progress through the game. No more accidental
-                  spoilers in the group chat. No more missing out on shared
-                  reactions. Just pure, synchronized enjoyment.
-                </p>
+        {/* Terms */}
+        <section id="terms" className="mb-8 scroll-mt-20">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <DocumentTextIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-            </section>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Terms</h2>
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 space-y-3">
+              <p>By using {SITE_CONFIG.name}, you agree to:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Use the service for personal, non-commercial purposes</li>
+                <li>Respect other users in your watch parties</li>
+                <li>Not abuse or attempt to compromise the service</li>
+              </ul>
+              <p>We can suspend accounts that violate these terms.</p>
+            </div>
+          </div>
+        </section>
 
-            <section id="privacy" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Lock className="text-blue-600" size={24} />
-                  Privacy Policy
-                </h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  Your privacy is important to us. When you use{" "}
-                  {SITE_CONFIG.name}, we collect and store only the information
-                  necessary to provide our service:
-                </p>
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>
-                      Account information (email, name) when you sign up via
-                      OAuth
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Watch party data and progress tracking</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Basic usage analytics to improve the service</span>
-                  </li>
-                </ul>
-                <p className="text-gray-700 leading-relaxed">
-                  We never sell your data to third parties. Your watch history
-                  is private and only shared with members of watch parties you
-                  explicitly join.
-                </p>
+        {/* Data & Cookies */}
+        <section id="data" className="mb-8 scroll-mt-20">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <FingerPrintIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-            </section>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Data & Cookies</h2>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">
+              We use cookies and local storage to keep you logged in and save your
+              preferences. When you sign in with Google or GitHub, you authorize us
+              to access your basic profile info (name, email) from those services.
+            </p>
+          </div>
+        </section>
 
-            <section id="terms" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <FileText className="text-blue-600" size={24} />
-                  Terms of Service
-                </h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  By using {SITE_CONFIG.name}, you agree to:
-                </p>
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>
-                      Use the service for personal, non-commercial purposes
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>
-                      Not share spoilers outside of the agreed watch party
-                      timeline
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>
-                      Respect other users and maintain a friendly community
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>
-                      Not attempt to abuse, hack, or compromise the service
-                    </span>
-                  </li>
-                </ul>
-                <p className="text-gray-700 leading-relaxed">
-                  We reserve the right to suspend accounts that violate these
-                  terms.
-                </p>
+        {/* Contact */}
+        <section id="contact" className="scroll-mt-20">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <EnvelopeIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-            </section>
-
-            <section id="data-cookies" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Cookie className="text-blue-600" size={24} />
-                  Data & Cookies
-                </h2>
-                <p className="text-gray-700 leading-relaxed">
-                  We use cookies and local storage to keep you logged in and
-                  remember your preferences. By signing in with OAuth providers
-                  (Google, GitHub, etc.), you authorize us to access your basic
-                  profile information (name, email) as provided by those
-                  services.
-                </p>
-              </div>
-            </section>
-
-            <section id="contact" className="mb-12 scroll-mt-20">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Mail className="text-blue-600" size={24} />
-                  Contact
-                </h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  Questions, feedback, or concerns? Reach out anytime.
-                </p>
-                <div className="space-y-4">
-                  <p className="text-gray-700">
-                    <span className="font-medium">Email:</span>{" "}
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Contact</h2>
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 space-y-3">
+              <p>Questions or feedback? Reach out anytime.</p>
+              <div className="flex flex-wrap gap-4">
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                  <p>
                     <a
                       href={`mailto:${SITE_CONFIG.email}`}
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {SITE_CONFIG.email}
                     </a>
                   </p>
-                  <p className="text-gray-700">
-                    <span className="font-medium">Built by:</span>{" "}
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Built by</span>
+                  <p>
                     <a
                       href={SITE_CONFIG.developer.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {SITE_CONFIG.developer.name}
                     </a>
                   </p>
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      href={`mailto:${SITE_CONFIG.email}`}
-                      asLink
-                    >
-                      Send Email
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      href={SITE_CONFIG.developer.website}
-                      asLink
-                    >
-                      View Portfolio
-                    </Button>
-                  </div>
                 </div>
               </div>
-            </section>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  href={`mailto:${SITE_CONFIG.email}`}
+                  asLink
+                >
+                  Send Email
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  href={SITE_CONFIG.developer.website}
+                  asLink
+                >
+                  Portfolio
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

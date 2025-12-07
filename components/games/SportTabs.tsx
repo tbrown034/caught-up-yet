@@ -16,6 +16,7 @@ export default function SportTabs({
   const tabs: Array<{ id: Sport | "all"; label: string }> = [
     { id: "all", label: "All" },
     { id: "nfl", label: "NFL" },
+    { id: "cfb", label: "CFB" },
     { id: "mlb", label: "MLB" },
     { id: "nba", label: "NBA" },
     { id: "nhl", label: "NHL" },

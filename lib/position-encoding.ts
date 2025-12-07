@@ -115,13 +115,15 @@ export function encodeMlbPosition(pos: MlbPosition): number {
 
 /**
  * Unified encoder - routes to sport-specific function
+ * CFB uses the same encoding as NFL (4 quarters, 15 min each)
  */
 export function encodePosition(
   pos: GamePosition,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   switch (sport) {
     case "nfl":
+    case "cfb": // College football uses same format as NFL
       return encodeNflPosition(pos as NflPosition);
     case "nba":
       return encodeNbaPosition(pos as NbaPosition);
@@ -253,13 +255,15 @@ export function decodeMlbPosition(encoded: number): MlbPosition {
 
 /**
  * Unified decoder - routes to sport-specific function
+ * CFB uses the same decoding as NFL
  */
 export function decodePosition(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): GamePosition {
   switch (sport) {
     case "nfl":
+    case "cfb": // College football uses same format as NFL
       return decodeNflPosition(encoded);
     case "nba":
       return decodeNbaPosition(encoded);
@@ -280,9 +284,10 @@ export function decodePosition(
  * Get maximum encoded position for a sport (end of regulation)
  * Use getMaxPositionWithOT for games that have overtime
  */
-export function getMaxPosition(sport: "nfl" | "mlb" | "nba" | "nhl"): number {
+export function getMaxPosition(sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"): number {
   switch (sport) {
     case "nfl":
+    case "cfb":
       return NFL_MAX - 1; // 3599 (Q4 0:00)
     case "nba":
       return NBA_MAX - 1; // 2879 (Q4 0:00)
@@ -300,7 +305,7 @@ export function getMaxPosition(sport: "nfl" | "mlb" | "nba" | "nhl"): number {
  * @param otPeriods Number of overtime periods (1 for single OT, 2 for double OT, etc.)
  */
 export function getMaxPositionWithOT(
-  sport: "nfl" | "mlb" | "nba" | "nhl",
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb",
   otPeriods: number = 0
 ): number {
   if (otPeriods <= 0) {
@@ -309,7 +314,8 @@ export function getMaxPositionWithOT(
 
   switch (sport) {
     case "nfl":
-      // NFL OT: 10-minute period (but we use 900-second slots for consistency)
+    case "cfb":
+      // NFL/CFB OT: 10-minute period (but we use 900-second slots for consistency)
       return NFL_MAX + otPeriods * 900 - 1;
     case "nba":
       // NBA OT: 5-minute periods (but we use 720-second slots for consistency)
@@ -330,7 +336,7 @@ export function getMaxPositionWithOT(
  */
 export function hasOvertime(
   scoringPlays: Array<{ period: number }> | undefined,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): boolean {
   if (!scoringPlays || scoringPlays.length === 0) return false;
 
@@ -338,6 +344,7 @@ export function hasOvertime(
 
   switch (sport) {
     case "nfl":
+    case "cfb":
       return maxPeriod > 4;
     case "nba":
       return maxPeriod > 4;
@@ -355,7 +362,7 @@ export function hasOvertime(
  */
 export function getOvertimePeriods(
   scoringPlays: Array<{ period: number }> | undefined,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   if (!scoringPlays || scoringPlays.length === 0) return 0;
 
@@ -363,6 +370,7 @@ export function getOvertimePeriods(
 
   switch (sport) {
     case "nfl":
+    case "cfb":
       return Math.max(0, maxPeriod - 4);
     case "nba":
       return Math.max(0, maxPeriod - 4);
@@ -379,7 +387,7 @@ export function getOvertimePeriods(
  * Get initial position for a sport (game start)
  */
 export function getInitialEncodedPosition(
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   return 0; // All sports start at 0
 }
@@ -389,7 +397,7 @@ export function getInitialEncodedPosition(
  */
 export function positionToPercentage(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   if (encoded <= PREGAME) return 0;
   const max = getMaxPosition(sport);
@@ -402,7 +410,7 @@ export function positionToPercentage(
  */
 export function percentageToPosition(
   percentage: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   const clamped = Math.min(100, Math.max(0, percentage));
   const max = getMaxPosition(sport);
@@ -434,16 +442,17 @@ export function filterMessagesByPosition<T extends { position_encoded: number }>
  * Get quarter/period/inning number from encoded position (for UI segmentation)
  * IMPORTANT: At exact boundaries (e.g., position 900), this returns the CURRENT segment
  * (end of Q1 = Q1, not start of Q2), consistent with decodeNflPosition behavior.
- * Supports OT: NFL Q5, NBA Q5+, NHL P4+, MLB 10th+
+ * Supports OT: NFL/CFB Q5, NBA Q5+, NHL P4+, MLB 10th+
  */
 export function getSegmentFromPosition(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   if (encoded <= PREGAME) return 1;
 
   switch (sport) {
-    case "nfl": {
+    case "nfl":
+    case "cfb": {
       // At exact boundary (900, 1800, 2700, 3600), treat as end of previous quarter
       if (encoded > 0 && encoded % 900 === 0) {
         return Math.min(Math.floor((encoded - 1) / 900) + 1, 5); // Max Q5 (OT)
@@ -476,10 +485,11 @@ export function getSegmentFromPosition(
  */
 export function getSegmentStartPosition(
   segment: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   switch (sport) {
     case "nfl":
+    case "cfb":
       return (segment - 1) * 900;
     case "nba":
       return (segment - 1) * 720;
@@ -499,10 +509,11 @@ export function getSegmentStartPosition(
  */
 export function getSegmentEndPosition(
   segment: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): number {
   switch (sport) {
     case "nfl":
+    case "cfb":
       return segment * 900; // Q1 ends at 900 (Q1 0:00), Q2 at 1800, etc.
     case "nba":
       return segment * 720; // Q1 ends at 720, Q2 at 1440, etc.
@@ -520,11 +531,12 @@ export function getSegmentEndPosition(
  */
 export function isAtSegmentBoundary(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): boolean {
   if (encoded <= 0) return false;
   switch (sport) {
     case "nfl":
+    case "cfb":
       return encoded % 900 === 0 && encoded < NFL_MAX;
     case "nba":
       return encoded % 720 === 0 && encoded < NBA_MAX;
@@ -543,7 +555,7 @@ export function isAtSegmentBoundary(
  */
 export function getPositionLabel(
   encoded: number,
-  sport: "nfl" | "mlb" | "nba" | "nhl"
+  sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb"
 ): string | null {
   if (encoded === 0) return "Start of Game";
 
@@ -551,7 +563,8 @@ export function getPositionLabel(
   if (encoded >= maxPos) return "End of Game";
 
   switch (sport) {
-    case "nfl": {
+    case "nfl":
+    case "cfb": {
       if (encoded === 900) return "End of Q1";
       if (encoded === 1800) return "Halftime";
       if (encoded === 2700) return "End of Q3";

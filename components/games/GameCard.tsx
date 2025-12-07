@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ESPNGame } from "@/lib/espn-api";
 import Image from "next/image";
-import { Users, Eye, EyeOff } from "lucide-react";
+import { UserGroupIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import CreateRoomModal from "@/components/rooms/CreateRoomModal";
 
 interface GameCardProps {
@@ -59,7 +59,7 @@ export default function GameCard({ game, spoilerProtection = true }: GameCardPro
           <span className="text-2xl font-bold text-gray-900">
             {score}
           </span>
-          <EyeOff className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
+          <EyeSlashIcon className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
         </button>
       );
     }
@@ -76,7 +76,7 @@ export default function GameCard({ game, spoilerProtection = true }: GameCardPro
           <div className="w-1.5 h-5 bg-gray-700 group-hover:bg-gray-600 rounded"></div>
           <div className="w-1.5 h-5 bg-gray-700 group-hover:bg-gray-600 rounded"></div>
         </div>
-        <Eye className="w-4 h-4 text-gray-500 group-hover:text-gray-400" />
+        <EyeIcon className="w-4 h-4 text-gray-500 group-hover:text-gray-400" />
       </button>
     );
   };
@@ -164,7 +164,7 @@ export default function GameCard({ game, spoilerProtection = true }: GameCardPro
             onClick={() => setShowCreateModal(true)}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            <Users className="w-5 h-5" />
+            <UserGroupIcon className="w-5 h-5" />
             Create Watch Party
           </button>
         </div>

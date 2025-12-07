@@ -1,7 +1,11 @@
 "use client";
 
-import Button from "@/components/ui/Button";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
+/**
+ * Error boundary for login page
+ * Catches errors during authentication flow
+ */
 export default function LoginError({
   error,
   reset,
@@ -9,22 +13,48 @@ export default function LoginError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isOAuthError =
+    error.message?.toLowerCase().includes("oauth") ||
+    error.message?.toLowerCase().includes("provider");
+  const isNetworkError =
+    error.message?.toLowerCase().includes("network") ||
+    error.message?.toLowerCase().includes("fetch");
+
+  let title = "Sign In Error";
+  let message = "Something went wrong during sign in. Please try again.";
+  let suggestions = [
+    "Try signing in again",
+    "Use a different sign-in method",
+    "Clear your browser cookies and try again",
+  ];
+
+  if (isOAuthError) {
+    title = "Authentication Failed";
+    message =
+      "We couldn't complete the sign-in with your provider. This might be a temporary issue.";
+    suggestions = [
+      "Try signing in again",
+      "Check if pop-ups are blocked in your browser",
+      "Try a different browser or device",
+    ];
+  } else if (isNetworkError) {
+    title = "Connection Problem";
+    message = "We couldn't connect to our authentication service.";
+    suggestions = [
+      "Check your internet connection",
+      "Try again in a few moments",
+      "Disable VPN if you're using one",
+    ];
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col gap-4 text-center">
-        <h1 className="text-4xl font-bold text-red-600">Login Error</h1>
-        <p className="text-gray-600">
-          {error.message || "Something went wrong during login"}
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button variant="primary" onClick={reset}>
-            Try Again
-          </Button>
-          <Button variant="secondary" href="/" asLink>
-            Go Home
-          </Button>
-        </div>
-      </div>
-    </div>
+    <ErrorDisplay
+      title={title}
+      message={message}
+      error={error}
+      reset={reset}
+      suggestions={suggestions}
+      devInfo="Login error - check OAuth configuration and Supabase auth settings"
+    />
   );
 }

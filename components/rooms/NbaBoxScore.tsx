@@ -94,7 +94,11 @@ export default function NbaBoxScore({
 
   const handleQuarterSelect = useCallback(
     (quarter: 1 | 2 | 3 | 4) => {
-      const newPosition = getSegmentStartPosition(quarter, "nba");
+      // Use position 1 second into the quarter to avoid boundary ambiguity
+      // Position 0 = Q1 12:00, Position 720 = Q1 0:00 (end of Q1)
+      // So Q2 start should be 721 (Q2 11:59), not 720 (Q1 0:00)
+      const basePosition = getSegmentStartPosition(quarter, "nba");
+      const newPosition = quarter === 1 ? 0 : basePosition + 1;
       onChange(newPosition);
     },
     [onChange]

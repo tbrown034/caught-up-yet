@@ -56,6 +56,7 @@ export default function GamesContainer({
     mlb: games.filter((g) => g.sport === "mlb").length,
     nba: games.filter((g) => g.sport === "nba").length,
     nhl: games.filter((g) => g.sport === "nhl").length,
+    cfb: games.filter((g) => g.sport === "cfb").length,
   };
 
   return (

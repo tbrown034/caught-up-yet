@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Button from "@/components/ui/Button";
-import { CircleUser, Shield } from "lucide-react";
+import { UserCircleIcon, ShieldCheckIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { isAdmin } from "@/lib/admin";
 
@@ -23,7 +23,7 @@ export default async function HeaderAuth() {
             className="hidden sm:flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors font-medium"
             title="Admin Dashboard"
           >
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             <span>Admin</span>
           </Link>
         )}
@@ -31,7 +31,7 @@ export default async function HeaderAuth() {
           href="/profile"
           className="hidden sm:flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
         >
-          <CircleUser className="w-5 h-5" />
+          <UserCircleIcon className="w-5 h-5" />
           <span className="max-w-[120px] truncate">{displayName}</span>
         </Link>
         <Button
@@ -41,7 +41,7 @@ export default async function HeaderAuth() {
           asLink
           className="sm:hidden"
         >
-          <CircleUser className="w-5 h-5" />
+          <UserCircleIcon className="w-5 h-5" />
         </Button>
         <form action="/auth/signout" method="post">
           <Button type="submit" variant="secondary" size="sm">

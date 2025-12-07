@@ -10,7 +10,6 @@ import {
   percentageToPosition,
   getMaxPosition,
   getPositionLabel,
-  isAtSegmentBoundary,
   hasOvertime,
   getMaxPositionWithOT,
   getOvertimePeriods,
@@ -158,7 +157,11 @@ export default function NflBoxScore({
 
   const handleQuarterSelect = useCallback(
     (quarter: 1 | 2 | 3 | 4 | 5) => {
-      const newPosition = getSegmentStartPosition(quarter, "nfl");
+      // Use position 1 second into the quarter to avoid boundary ambiguity
+      // Position 0 = Q1 15:00, Position 900 = Q1 0:00 (end of Q1)
+      // So Q2 start should be 901 (Q2 14:59), not 900 (Q1 0:00)
+      const basePosition = getSegmentStartPosition(quarter, "nfl");
+      const newPosition = quarter === 1 ? 0 : basePosition + 1;
       onChange(newPosition);
     },
     [onChange]
@@ -279,10 +282,6 @@ export default function NflBoxScore({
   // Get special position label if at boundary
   const positionLabel = useMemo(() => {
     return getPositionLabel(positionEncoded, "nfl");
-  }, [positionEncoded]);
-
-  const isBoundary = useMemo(() => {
-    return isAtSegmentBoundary(positionEncoded, "nfl");
   }, [positionEncoded]);
 
   // Preset positions for quick access

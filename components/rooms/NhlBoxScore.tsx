@@ -94,7 +94,11 @@ export default function NhlBoxScore({
 
   const handlePeriodSelect = useCallback(
     (period: 1 | 2 | 3) => {
-      const newPosition = getSegmentStartPosition(period, "nhl");
+      // Use position 1 second into the period to avoid boundary ambiguity
+      // Position 0 = P1 20:00, Position 1200 = P1 0:00 (end of P1)
+      // So P2 start should be 1201 (P2 19:59), not 1200 (P1 0:00)
+      const basePosition = getSegmentStartPosition(period, "nhl");
+      const newPosition = period === 1 ? 0 : basePosition + 1;
       onChange(newPosition);
     },
     [onChange]

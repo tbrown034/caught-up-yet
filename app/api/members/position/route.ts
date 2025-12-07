@@ -40,7 +40,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
+    const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb";
 
     // Build update object
     const updates: {

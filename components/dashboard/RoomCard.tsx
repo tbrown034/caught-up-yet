@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Trash2 } from "lucide-react";
+import { CalendarIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Room, GameData } from "@/lib/database.types";
 import { formatShareCode } from "@/lib/share-code";
 
@@ -87,7 +87,7 @@ export default function RoomCard({ room, isCreator }: RoomCardProps) {
               </p>
             )}
             <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-              <Calendar className="w-3 h-3" />
+              <CalendarIcon className="w-3 h-3" />
               {new Date(room.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function RoomCard({ room, isCreator }: RoomCardProps) {
               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Delete party"
             >
-              <Trash2 className="w-4 h-4" />
+              <TrashIcon className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -125,7 +125,7 @@ export default function RoomCard({ room, isCreator }: RoomCardProps) {
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+                <TrashIcon className="w-6 h-6 text-red-600" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">

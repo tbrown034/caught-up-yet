@@ -1,7 +1,11 @@
 "use client";
 
-import Button from "@/components/ui/Button";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
+/**
+ * Error boundary for games page
+ * Catches errors during ESPN API calls, game data parsing, etc.
+ */
 export default function GamesError({
   error,
   reset,
@@ -9,29 +13,50 @@ export default function GamesError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isApiError =
+    error.message?.toLowerCase().includes("api") ||
+    error.message?.toLowerCase().includes("espn");
+  const isNetworkError =
+    error.message?.toLowerCase().includes("network") ||
+    error.message?.toLowerCase().includes("fetch") ||
+    error.message?.toLowerCase().includes("timeout");
+
+  let title = "Failed to Load Games";
+  let message =
+    "We couldn't fetch the latest game data. Please try again in a moment.";
+  let suggestions = [
+    "Try refreshing the page",
+    "Check your internet connection",
+    "The ESPN API may be temporarily unavailable",
+  ];
+
+  if (isApiError) {
+    title = "ESPN Data Unavailable";
+    message =
+      "We're having trouble getting game data from ESPN. This usually resolves itself quickly.";
+    suggestions = [
+      "Wait a few moments and refresh",
+      "Try a different sport tab",
+      "ESPN's API occasionally has brief outages",
+    ];
+  } else if (isNetworkError) {
+    title = "Connection Problem";
+    message = "We couldn't connect to fetch game data.";
+    suggestions = [
+      "Check your internet connection",
+      "Try disabling your VPN if using one",
+      "Refresh the page in a few moments",
+    ];
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="flex flex-col gap-4 text-center max-w-md">
-        <h1 className="text-4xl font-bold text-red-600">
-          Failed to Load Games
-        </h1>
-        <p className="text-gray-600">
-          {error.message ||
-            "There was a problem fetching game data from ESPN. The API might be temporarily unavailable."}
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button variant="primary" onClick={reset}>
-            Try Again
-          </Button>
-          <Button variant="secondary" href="/" asLink>
-            Go Home
-          </Button>
-        </div>
-        <p className="text-sm text-gray-500 mt-4">
-          Note: This app uses ESPN's unofficial API which may occasionally be
-          unavailable.
-        </p>
-      </div>
-    </div>
+    <ErrorDisplay
+      title={title}
+      message={message}
+      error={error}
+      reset={reset}
+      suggestions={suggestions}
+      devInfo="Games page error - ESPN API may be down or rate limited. Check network tab for response codes."
+    />
   );
 }

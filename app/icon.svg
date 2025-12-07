@@ -1,4 +1,30 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="#2563eb"/>
-  <path d="M369 169L213 325L143 255" stroke="white" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Background with subtle gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)"/>
+
+  <!-- Stylized "C" that looks like a progress arc / catching up -->
+  <path
+    d="M 340 140
+       A 140 140 0 1 0 340 372"
+    stroke="white"
+    stroke-width="48"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Checkmark at the end - "caught up" -->
+  <path
+    d="M 300 280 L 340 320 L 400 240"
+    stroke="white"
+    stroke-width="40"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
 </svg>

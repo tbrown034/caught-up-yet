@@ -54,7 +54,7 @@ export interface Database {
         Row: {
           id: string;
           game_id: string;
-          sport: "nfl" | "mlb" | "nba" | "nhl";
+          sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb";
           share_code: string;
           created_by: string;
           created_at: string;
@@ -66,7 +66,7 @@ export interface Database {
         Insert: {
           id?: string;
           game_id: string;
-          sport: "nfl" | "mlb" | "nba" | "nhl";
+          sport: "nfl" | "mlb" | "nba" | "nhl" | "cfb";
           share_code: string;
           created_by: string;
           created_at?: string;
@@ -78,7 +78,7 @@ export interface Database {
         Update: {
           id?: string;
           game_id?: string;
-          sport?: "nfl" | "mlb" | "nba" | "nhl";
+          sport?: "nfl" | "mlb" | "nba" | "nhl" | "cfb";
           share_code?: string;
           created_by?: string;
           created_at?: string;

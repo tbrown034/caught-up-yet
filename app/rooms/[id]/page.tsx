@@ -2,7 +2,8 @@
 
 import { use, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Users, MessageCircle, Crown, Edit2, Trash2, X, Check, Radio } from "lucide-react";
+import { EyeIcon, UserGroupIcon, ChatBubbleLeftIcon, PencilIcon, TrashIcon, XMarkIcon, CheckIcon, SignalIcon } from "@heroicons/react/24/outline";
+import { StarIcon } from "@heroicons/react/24/solid";
 import type { Room, Message, GameData, RoomMember, GameStatus } from "@/lib/database.types";
 import { encodePosition, isPositionVisible } from "@/lib/position-encoding";
 import { formatGamePosition } from "@/lib/game-position";
@@ -614,14 +615,14 @@ export default function RoomPage({
                     className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                     title="Save"
                   >
-                    <Check className="w-5 h-5" />
+                    <CheckIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={handleCancelEdit}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     title="Cancel"
                   >
-                    <X className="w-5 h-5" />
+                    <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
               ) : (
@@ -635,7 +636,7 @@ export default function RoomPage({
                       className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       title="Edit party name"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <PencilIcon className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -658,7 +659,7 @@ export default function RoomPage({
                   >
                     {gameStatus === "STATUS_IN_PROGRESS" || gameStatus === "IN_PROGRESS" || gameStatus === "LIVE" ? (
                       <>
-                        <Radio className="w-3 h-3" />
+                        <SignalIcon className="w-3 h-3" />
                         LIVE
                       </>
                     ) : gameStatus === "STATUS_FINAL" || gameStatus === "POST" || gameStatus === "FINAL" ? (
@@ -672,7 +673,7 @@ export default function RoomPage({
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-2 text-gray-600">
-                <Users className="w-4 h-4" />
+                <UserGroupIcon className="w-4 h-4" />
                 <span className="text-sm">
                   {memberCount} {memberCount === 1 ? "member" : "members"}
                 </span>
@@ -692,7 +693,7 @@ export default function RoomPage({
           {/* Message Stats */}
           <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
             <div className="flex items-center gap-1.5">
-              <MessageCircle className="w-4 h-4" />
+              <ChatBubbleLeftIcon className="w-4 h-4" />
               <span>
                 {visibleMessagesCount} / {messages.length} messages visible
               </span>
@@ -719,7 +720,7 @@ export default function RoomPage({
                     }`}
                   >
                     {isCreator && (
-                      <Crown className="w-3.5 h-3.5 text-yellow-600" />
+                      <StarIcon className="w-3.5 h-3.5 text-yellow-600" />
                     )}
                     <span className="font-medium">
                       {displayName}
@@ -758,7 +759,7 @@ export default function RoomPage({
             {/* Hidden messages count */}
             {!showSpoilers && hiddenMessagesCount > 0 && (
               <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                <MessageCircle className="w-3 h-3 inline mr-1" />
+                <ChatBubbleLeftIcon className="w-3 h-3 inline mr-1" />
                 {hiddenMessagesCount} {hiddenMessagesCount === 1 ? "comment" : "comments"} ahead (markers hidden)
               </div>
             )}
@@ -771,7 +772,7 @@ export default function RoomPage({
                 onClick={() => setShowDeleteConfirm(true)}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
               >
-                <Trash2 className="w-4 h-4" />
+                <TrashIcon className="w-4 h-4" />
                 Delete Watch Party
               </button>
             </div>
@@ -784,7 +785,7 @@ export default function RoomPage({
             <div className="bg-white rounded-lg max-w-md w-full p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-6 h-6 text-red-600" />
+                  <TrashIcon className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">Delete Watch Party?</h3>
@@ -1112,7 +1113,7 @@ function MessageFeedEnhanced({
   if (messages.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <ChatBubbleLeftIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <p className="text-gray-600">No messages yet</p>
         <p className="text-sm text-gray-500">Be the first to share a reaction!</p>
       </div>
@@ -1122,7 +1123,7 @@ function MessageFeedEnhanced({
   if (visibleMessages.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <Eye className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <EyeIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <p className="text-gray-600">No messages at your current position</p>
         <p className="text-sm text-gray-500">
           Advance your position or toggle spoiler protection to see messages

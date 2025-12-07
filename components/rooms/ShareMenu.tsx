@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Copy, Mail, MessageSquare, Check } from "lucide-react";
+import { ShareIcon, ClipboardDocumentIcon, EnvelopeIcon, ChatBubbleLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import {
   generateShareMessage,
   generateEmailShare,
@@ -59,7 +59,7 @@ export default function ShareMenu({
             : "bg-blue-600 hover:bg-blue-700 text-white"
         }`}
       >
-        <Share2 className="w-4 h-4" />
+        <ShareIcon className="w-4 h-4" />
         Share Party
       </button>
 
@@ -97,9 +97,9 @@ export default function ShareMenu({
                   title="Copy code"
                 >
                   {copiedItem === "code" ? (
-                    <Check className="w-4 h-4" />
+                    <CheckIcon className="w-4 h-4" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <ClipboardDocumentIcon className="w-4 h-4" />
                   )}
                 </button>
               </div>
@@ -112,9 +112,9 @@ export default function ShareMenu({
                 className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
               >
                 {copiedItem === "message" ? (
-                  <Check className="w-5 h-5 text-green-600" />
+                  <CheckIcon className="w-5 h-5 text-green-600" />
                 ) : (
-                  <Copy className="w-5 h-5 text-gray-600" />
+                  <ClipboardDocumentIcon className="w-5 h-5 text-gray-600" />
                 )}
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
@@ -130,7 +130,7 @@ export default function ShareMenu({
                 onClick={handleEmail}
                 className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
               >
-                <Mail className="w-5 h-5 text-gray-600" />
+                <EnvelopeIcon className="w-5 h-5 text-gray-600" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     Send via Email
@@ -145,7 +145,7 @@ export default function ShareMenu({
                 onClick={handleSMS}
                 className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
               >
-                <MessageSquare className="w-5 h-5 text-gray-600" />
+                <ChatBubbleLeftIcon className="w-5 h-5 text-gray-600" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     Send via Text

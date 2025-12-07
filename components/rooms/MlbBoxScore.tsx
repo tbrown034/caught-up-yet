@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef } from "react";
-import { Circle } from "lucide-react";
 import type { GameData } from "@/lib/database.types";
 import {
   decodeMlbPosition,
@@ -372,18 +371,22 @@ export default function MlbBoxScore({
             >
               <div className="flex gap-1">
                 {[0, 1, 2].map((outNum) => (
-                  <Circle
+                  <svg
                     key={outNum}
+                    viewBox="0 0 24 24"
                     className={`w-4 h-4 ${
                       outNum < outs
                         ? currentOuts === outs
-                          ? "fill-white text-white"
-                          : "fill-green-600 text-green-600"
+                          ? "fill-white stroke-white"
+                          : "fill-green-600 stroke-green-600"
                         : currentOuts === outs
-                        ? "text-white"
-                        : "text-gray-400"
+                        ? "fill-none stroke-white"
+                        : "fill-none stroke-gray-400"
                     }`}
-                  />
+                    strokeWidth={2}
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
                 ))}
               </div>
               <span className="text-xs font-medium">
