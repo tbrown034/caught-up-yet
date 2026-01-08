@@ -64,3 +64,4 @@ feeling when that's not physically possible.
 
 It is 7:10 p.m. Oct 21 and will be making my first commit soon. But this project was originally started Oct. 8 and has gone though modifications though Oct. 20 via https://github.com/tbrown034/watch-lock. Applying lesson learned, new branding, simplified approach, better use of Supabase (this was my first time using) after other lessons learned better undertanding of docs, including useMemo as well.
 # caught-up-yet
+
