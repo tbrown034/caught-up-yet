@@ -3,12 +3,46 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { inter, outfit, jetbrainsMono } from "@/lib/fonts";
+import { SITE_CONFIG } from "@/constants/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://caught-up-yet.vercel.app"),
-  title: "Caught Up Yet",
-  description: "Watch Games Together, But No Spoilers",
+  title: {
+    default: SITE_CONFIG.name,
+    template: `%s | ${SITE_CONFIG.name}`,
+  },
+  description: SITE_CONFIG.description,
+  keywords: [
+    "sports",
+    "watch party",
+    "spoiler free",
+    "NFL",
+    "NBA",
+    "MLB",
+    "NHL",
+    "college football",
+    "DVR",
+    "delayed viewing",
+  ],
+  authors: [{ name: SITE_CONFIG.developer.name }],
+  creator: SITE_CONFIG.developer.name,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: SITE_CONFIG.name,
+    title: SITE_CONFIG.name,
+    description: SITE_CONFIG.tagline,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_CONFIG.name,
+    description: SITE_CONFIG.tagline,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 // Script to prevent flash of wrong theme

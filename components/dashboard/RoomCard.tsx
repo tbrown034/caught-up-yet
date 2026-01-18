@@ -105,6 +105,7 @@ export default function RoomCard({ room, isCreator }: RoomCardProps) {
             <button
               onClick={handleDeleteClick}
               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              aria-label="Delete party"
               title="Delete party"
             >
               <TrashIcon className="w-4 h-4" />

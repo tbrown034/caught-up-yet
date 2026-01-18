@@ -124,3 +124,18 @@ The app supports light/dark mode via `ThemeProvider`:
 All documentation is in `/docs`:
 - Project docs: `/docs/*.md` (getting-started, components, folder-structure)
 - External library references: `/docs/references/`
+
+---
+
+## Workspace Context
+
+**Project Name**: caught-up-yet
+**Location**: `~/Desktop/ActiveProjects/caught-up-yet`
+**GitHub**: github.com/tbrown034/caught-up-yet
+
+This project is part of Trevor Brown's ActiveProjects workspace:
+- Workspace docs: `~/Desktop/ActiveProjects/_docs/`
+- Project status: See `_docs/status.md` for all project statuses
+- Naming convention: kebab-case
+
+Last updated: 2026-01-08

@@ -94,7 +94,6 @@ export async function POST(request: Request) {
     expiresAt.setHours(expiresAt.getHours() + 24);
 
     // Create room
-    console.log('[CREATE] Creating room with share code:', shareCode);
     const { data: room, error: roomError } = await supabase
       .from("rooms")
       .insert({
@@ -109,8 +108,6 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
-
-    console.log('[CREATE] Room created:', { id: room?.id, share_code: room?.share_code });
 
     if (roomError) {
       console.error("Error creating room:", roomError);

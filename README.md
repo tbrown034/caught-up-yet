@@ -6,6 +6,48 @@ Enable families to share real-time reactions to sports games
 even when watching at different times, without spoiling each
 other.
 
+---
+
+## Development & Verification
+
+**Always verify changes by running the dev build before committing.**
+
+```bash
+npm run dev
+# Open http://localhost:3000
+```
+
+### Verification Checklist
+
+Before pushing changes, check these holistically against project goals:
+
+**Security (Critical)**
+- [ ] Auth flows work (login, logout, callback redirects)
+- [ ] Admin pages only accessible to admin users
+- [ ] No sensitive data exposed in browser console/network tab
+- [ ] Redirects only go to internal routes (no open redirects)
+
+**Core Functionality**
+- [ ] Can create/join watch party rooms
+- [ ] Position encoding works (messages filtered by game position)
+- [ ] Spoiler-free experience maintained (delayed watchers don't see future messages)
+- [ ] Real-time updates reflect across members
+
+**User Experience**
+- [ ] Dark mode toggle works
+- [ ] Mobile responsive layouts
+- [ ] Error states handled gracefully
+- [ ] Loading states present
+
+**Build Health**
+```bash
+npm run build    # Should complete without errors
+npm run test     # All tests should pass
+npm audit        # Should show 0 vulnerabilities
+```
+
+---
+
 The Problem You're Solving
 
 Your family can't text about a game when some people are

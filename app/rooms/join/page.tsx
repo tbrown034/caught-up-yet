@@ -42,19 +42,12 @@ function JoinRoomContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('[CLIENT JOIN] ========== JOIN ATTEMPT START ==========');
-    console.log('[CLIENT JOIN] Share code:', shareCode);
-    console.log('[CLIENT JOIN] Guest name:', guestName);
-    console.log('[CLIENT JOIN] Is authenticated:', isAuthenticated);
-
     if (!shareCode.trim()) {
-      console.log('[CLIENT JOIN] Missing share code');
       setError("Please enter a share code");
       return;
     }
 
     if (!isAuthenticated && !guestName.trim()) {
-      console.log('[CLIENT JOIN] Missing guest name');
       setError("Please enter your name");
       return;
     }
@@ -65,44 +58,30 @@ function JoinRoomContent() {
     try {
       // If not authenticated, sign in anonymously first
       if (!isAuthenticated) {
-        console.log('[CLIENT JOIN] Signing in anonymously...');
         const { error: anonError } = await supabase.auth.signInAnonymously();
         if (anonError) {
-          console.error('[CLIENT JOIN] Anonymous sign-in failed:', anonError);
-          throw new Error("Failed to create guest session");
+          throw new Error("Unable to join. Please check your internet connection and try again.");
         }
-        console.log('[CLIENT JOIN] Anonymous sign-in successful');
       }
-
-      const requestBody = {
-        share_code: shareCode.trim(),
-        display_name: !isAuthenticated ? guestName.trim() : undefined,
-      };
-
-      console.log('[CLIENT JOIN] Sending join request:', requestBody);
 
       const response = await fetch("/api/rooms/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          share_code: shareCode.trim(),
+          display_name: !isAuthenticated ? guestName.trim() : undefined,
+        }),
       });
-
-      console.log('[CLIENT JOIN] Response status:', response.status);
 
       if (!response.ok) {
         const data = await response.json();
-        console.error('[CLIENT JOIN] Join failed:', { status: response.status, error: data });
         throw new Error(data.error || "Failed to join room");
       }
 
       const data = await response.json();
-      console.log('[CLIENT JOIN] Join successful:', { roomId: data.room.id, alreadyMember: data.already_member });
-      console.log('[CLIENT JOIN] Redirecting to room...');
       router.push(`/rooms/${data.room.id}`);
     } catch (err) {
-      console.error("[CLIENT JOIN] Error joining room:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to join room";
-      console.log('[CLIENT JOIN] Setting error message:', errorMessage);
       setError(errorMessage);
       setIsJoining(false);
     }
@@ -116,30 +95,30 @@ function JoinRoomContent() {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-8 max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <UserGroupIcon className="w-8 h-8 text-blue-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+            <UserGroupIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Join Watch Party
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Enter the share code to join an existing watch party
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Share Code
             </label>
             <input
@@ -148,17 +127,17 @@ function JoinRoomContent() {
               onChange={(e) => handleShareCodeChange(e.target.value)}
               placeholder="ABC123"
               maxLength={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold tracking-wider focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center text-2xl font-bold tracking-wider bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
               disabled={isJoining}
             />
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
               Enter the 6-character code shared with you
             </p>
           </div>
 
           {!isAuthenticated && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Your Name (Guest)
               </label>
               <div className="relative">
@@ -169,19 +148,19 @@ function JoinRoomContent() {
                   onChange={(e) => setGuestName(e.target.value)}
                   placeholder="Enter your name"
                   maxLength={30}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isJoining}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 This name will be shown to other party members
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}
 
@@ -189,7 +168,7 @@ function JoinRoomContent() {
             <button
               type="submit"
               disabled={!shareCode.trim() || isJoining}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {isJoining ? (
                 "Joining..."
@@ -205,19 +184,19 @@ function JoinRoomContent() {
               type="button"
               onClick={() => router.push("/games")}
               disabled={isJoining}
-              className="w-full border-2 border-gray-300 hover:border-gray-400 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 font-semibold py-3 rounded-lg transition-colors"
+              className="w-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 disabled:border-gray-200 dark:disabled:border-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 font-semibold py-3 rounded-lg transition-colors"
             >
               Back to Games
             </button>
           </div>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-600 text-center">
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
             Don't have a code?{" "}
             <button
               onClick={() => router.push("/games")}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
             >
               Create your own watch party
             </button>
@@ -232,8 +211,8 @@ export default function JoinRoomPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <p className="text-gray-600">Loading...</p>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       }
     >

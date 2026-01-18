@@ -178,6 +178,7 @@ export default function RoomManager({ createdParties }: RoomManagerProps) {
                     <Link
                       href={`/rooms/${party.id}`}
                       className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded transition-colors"
+                      aria-label="Open party"
                       title="Open party"
                     >
                       <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -185,6 +186,7 @@ export default function RoomManager({ createdParties }: RoomManagerProps) {
                     <button
                       onClick={() => openDeleteModal("single", party.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
+                      aria-label="Delete party"
                       title="Delete party"
                     >
                       <TrashIcon className="w-4 h-4" />

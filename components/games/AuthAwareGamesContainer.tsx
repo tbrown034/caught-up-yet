@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESPNGame, Sport, fetchAllSportsGames } from "@/lib/espn-api";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
@@ -20,6 +21,8 @@ export default function AuthAwareGamesContainer({
   initialDate,
 }: AuthAwareGamesContainerProps) {
   const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedSport, setSelectedSport] = useState<Sport | "all">("all");
   const [games, setGames] = useState<ESPNGame[]>(initialGames);
@@ -27,6 +30,24 @@ export default function AuthAwareGamesContainer({
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [spoilerProtection, setSpoilerProtection] = useState(true);
+  const [autoOpenGameId, setAutoOpenGameId] = useState<string | null>(null);
+
+  // Check for createParty param from auth redirect
+  useEffect(() => {
+    const createPartyId = searchParams.get("createParty");
+    if (createPartyId) {
+      setAutoOpenGameId(createPartyId);
+      // Clear the URL param without triggering a navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete("createParty");
+      router.replace(url.pathname + url.search, { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Callback when modal is opened to clear the autoOpenGameId
+  const handleModalOpened = useCallback(() => {
+    setAutoOpenGameId(null);
+  }, []);
 
   useEffect(() => {
     async function checkAuth() {
@@ -86,8 +107,8 @@ export default function AuthAwareGamesContainer({
       });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center mb-8">{dateLabel}</h1>
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-4xl font-bold text-center mb-6 sm:mb-8 text-gray-900 dark:text-white">{dateLabel}</h1>
 
       {/* Show appropriate banner based on auth status */}
       {isAuthenticated === true && <AuthUserBanner />}
@@ -100,21 +121,21 @@ export default function AuthAwareGamesContainer({
 
       {/* Spoiler Protection Toggle */}
       <div className="mb-6 flex justify-center">
-        <div className="inline-flex items-center gap-3 px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm">
+        <div className="inline-flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
             {spoilerProtection ? (
-              <EyeSlashIcon className="w-5 h-5 text-blue-600" />
+              <EyeSlashIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             ) : (
-              <EyeIcon className="w-5 h-5 text-gray-500" />
+              <EyeIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             )}
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">
               Spoiler Protection
             </span>
           </div>
           <button
             onClick={() => setSpoilerProtection(!spoilerProtection)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              spoilerProtection ? "bg-blue-600" : "bg-gray-400"
+              spoilerProtection ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-600"
             }`}
             aria-label="Toggle spoiler protection"
           >
@@ -124,7 +145,7 @@ export default function AuthAwareGamesContainer({
               }`}
             />
           </button>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-gray-600 dark:text-gray-400">
             {spoilerProtection ? "Scores Hidden" : "Scores Visible"}
           </span>
         </div>
@@ -157,7 +178,13 @@ export default function AuthAwareGamesContainer({
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredGames.map((game) => (
-            <GameCard key={game.id} game={game} spoilerProtection={spoilerProtection} />
+            <GameCard
+              key={game.id}
+              game={game}
+              spoilerProtection={spoilerProtection}
+              autoOpenModal={autoOpenGameId === game.id}
+              onModalOpened={handleModalOpened}
+            />
           ))}
         </div>
       )}

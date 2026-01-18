@@ -154,13 +154,18 @@ export function isMessageVisible(
 // ============================================
 
 /**
- * Format NFL position for display
- * Example: "Q3 8:02"
+ * Format NFL position for display (ESPN style)
+ * Example: "1Q 8:02" or "OT 2:30"
  */
 export function formatNflPosition(pos: NflPosition): string {
   const mins = String(pos.minutes).padStart(2, "0");
   const secs = String(pos.seconds).padStart(2, "0");
-  return `Q${pos.quarter} ${mins}:${secs}`;
+  const time = `${mins}:${secs}`;
+
+  if (pos.quarter === 5) {
+    return `OT ${time}`;
+  }
+  return `${pos.quarter}Q ${time}`;
 }
 
 /**
@@ -175,23 +180,41 @@ export function formatMlbPosition(pos: MlbPosition): string {
 }
 
 /**
- * Format NBA position for display
- * Example: "Q2 6:45"
+ * Format NBA position for display (ESPN style)
+ * Example: "1Q 6:45" or "OT 2:30"
  */
 export function formatNbaPosition(pos: NbaPosition): string {
   const mins = String(pos.minutes).padStart(2, "0");
   const secs = String(pos.seconds).padStart(2, "0");
-  return `Q${pos.quarter} ${mins}:${secs}`;
+  const time = `${mins}:${secs}`;
+
+  if (pos.quarter === 5) {
+    return `OT ${time}`;
+  }
+  if (pos.quarter > 5) {
+    return `${pos.quarter - 4}OT ${time}`;
+  }
+  return `${pos.quarter}Q ${time}`;
 }
 
 /**
- * Format NHL position for display
- * Example: "P2 12:30"
+ * Format NHL position for display (ESPN style)
+ * Example: "1st 12:30" or "OT 2:30"
  */
 export function formatNhlPosition(pos: NhlPosition): string {
   const mins = String(pos.minutes).padStart(2, "0");
   const secs = String(pos.seconds).padStart(2, "0");
-  return `P${pos.period} ${mins}:${secs}`;
+  const time = `${mins}:${secs}`;
+
+  if (pos.period === 4) {
+    return `OT ${time}`;
+  }
+  if (pos.period === 5) {
+    return `2OT ${time}`;
+  }
+
+  const ordinal = pos.period === 1 ? "1st" : pos.period === 2 ? "2nd" : "3rd";
+  return `${ordinal} ${time}`;
 }
 
 /**

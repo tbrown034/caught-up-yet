@@ -21,10 +21,6 @@ export default function HeroCTA() {
           Learn More
         </Button>
       </div>
-
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
-        Free to use
-      </p>
     </>
   );
 }

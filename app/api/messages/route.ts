@@ -5,7 +5,6 @@ import { encodePosition, decodePosition } from "@/lib/position-encoding";
 
 // POST /api/messages - Send a message in a room
 export async function POST(request: Request) {
-  console.log('[API/MESSAGES] POST request received');
   try {
     const supabase = await createClient();
 
@@ -16,17 +15,12 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.log('[API/MESSAGES] Auth failed:', authError?.message);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log('[API/MESSAGES] User authenticated:', user.id);
 
     // Parse request body
     const body = await request.json();
     const { room_id, content, position, position_encoded } = body;
-
-    console.log('[API/MESSAGES] Request data:', { room_id, content, position_encoded });
 
     // Validate required fields - accept either position (JSONB) or position_encoded (integer)
     if (!room_id || !content || (position === undefined && position_encoded === undefined)) {
@@ -93,14 +87,6 @@ export async function POST(request: Request) {
     }
 
     // Create message with both position formats
-    console.log('[API/MESSAGES] Creating message with:', {
-      room_id,
-      user_id: user.id,
-      content: content.trim(),
-      position: positionJsonb,
-      position_encoded: positionInt,
-    });
-
     const { data: message, error: messageError } = await supabase
       .from("messages")
       .insert({
@@ -114,14 +100,13 @@ export async function POST(request: Request) {
       .single();
 
     if (messageError) {
-      console.error("[API/MESSAGES] Error creating message:", messageError);
+      console.error("Error creating message:", messageError);
       return NextResponse.json(
         { error: "Failed to send message" },
         { status: 500 }
       );
     }
 
-    console.log('[API/MESSAGES] Message created successfully:', message.id);
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
     console.error("Unexpected error sending message:", error);

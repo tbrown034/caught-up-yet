@@ -79,7 +79,6 @@ export async function GET(
 
     // Get all reactions for these messages
     const messageIds = (messages || []).map(m => m.id);
-    console.log('[ROOM] Fetching reactions for', messageIds.length, 'messages');
 
     const { data: reactions, error: reactionsError } = await supabase
       .from("message_reactions")
@@ -87,9 +86,7 @@ export async function GET(
       .in("message_id", messageIds);
 
     if (reactionsError) {
-      console.error("[ROOM] Error fetching reactions:", reactionsError);
-    } else {
-      console.log('[ROOM] Fetched', reactions?.length || 0, 'reactions');
+      console.error("Error fetching reactions:", reactionsError);
     }
 
     // Create a map of user_id to display_name from members

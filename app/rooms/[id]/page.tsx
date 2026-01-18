@@ -1,20 +1,41 @@
 "use client";
 
 import { use, useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { EyeIcon, UserGroupIcon, ChatBubbleLeftIcon, PencilIcon, TrashIcon, XMarkIcon, CheckIcon, SignalIcon } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
-import type { Room, Message, GameData, RoomMember, GameStatus } from "@/lib/database.types";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  EyeIcon,
+  ChatBubbleLeftIcon,
+  XMarkIcon,
+  TrashIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/outline";
+import type {
+  Room,
+  Message,
+  GameData,
+  RoomMember,
+  GameStatus,
+} from "@/lib/database.types";
 import { encodePosition, isPositionVisible } from "@/lib/position-encoding";
 import { formatGamePosition } from "@/lib/game-position";
-import BoxScorePosition from "@/components/rooms/BoxScorePosition";
 import { createClient } from "@/lib/supabase/client";
-import ShareMenu from "@/components/rooms/ShareMenu";
+import { formatShareCode } from "@/lib/share-code";
 import { debounce } from "@/lib/utils";
 import { calculateLivePosition } from "@/lib/live-position";
 import type { ScoringPlay } from "@/lib/score-at-position";
-import { getScoreAtPosition, isGameLive as checkIfGameLive } from "@/lib/score-at-position";
+import {
+  getScoreAtPosition,
+  isGameLive as checkIfGameLive,
+} from "@/lib/score-at-position";
 import { fetchGameScoringPlays, fetchGameStatus } from "@/lib/espn-api";
+
+// New chat-first components
+import GameInfoPanel from "@/components/rooms/GameInfoPanel";
+import RoomDrawer from "@/components/rooms/RoomDrawer";
+import CompactTimeline from "@/components/rooms/CompactTimeline";
+import ShareMenu from "@/components/rooms/ShareMenu";
+import WelcomeModal from "@/components/rooms/WelcomeModal";
+import type { MessageMarkers } from "@/components/rooms/BoxScorePosition";
 
 interface ReactionUser {
   user_id: string;
@@ -41,25 +62,35 @@ export default function RoomPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // State
   const [room, setRoom] = useState<Room | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [currentPositionEncoded, setCurrentPositionEncoded] = useState<number>(0);
-  const [showSpoilers, setShowSpoilers] = useState(true); // Default: OFF (true = show all markers)
+  const [showSpoilers, setShowSpoilers] = useState(true);
   const [memberCount, setMemberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Someone");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [livePositionEncoded, setLivePositionEncoded] = useState<number | null>(null);
+  const [livePositionEncoded, setLivePositionEncoded] = useState<number | null>(
+    null
+  );
   const [scoringPlays, setScoringPlays] = useState<ScoringPlay[]>([]);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
+
+  // Scroll to bottom when messages change
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   // Fetch room data
   const fetchRoomData = useCallback(async () => {
@@ -75,6 +106,18 @@ export default function RoomPage({
           setError("You are not a member of this room");
           return;
         }
+        if (response.status === 404) {
+          setError("This watch party doesn't exist or has been deleted");
+          setIsLoading(false);
+          return;
+        }
+        if (response.status === 410) {
+          setError(
+            "This watch party has expired. Watch parties expire after the game ends."
+          );
+          setIsLoading(false);
+          return;
+        }
         throw new Error("Failed to load room");
       }
 
@@ -85,11 +128,10 @@ export default function RoomPage({
       setShowSpoilers(data.show_spoilers);
       setMemberCount(data.members?.length || 0);
 
-      // Handle position - prefer encoded, fallback to JSONB conversion
+      // Handle position
       if (data.current_user_position_encoded !== undefined) {
         setCurrentPositionEncoded(data.current_user_position_encoded);
       } else if (data.current_user_position && data.room) {
-        // Convert JSONB to encoded for backward compatibility
         const encoded = encodePosition(
           data.current_user_position,
           data.room.sport as "nfl" | "mlb" | "nba" | "nhl"
@@ -97,13 +139,13 @@ export default function RoomPage({
         setCurrentPositionEncoded(encoded);
       }
 
-      // Calculate live position from game status
+      // Calculate live position
       if (data.room?.game_data?.status) {
-        const gameStatusObj = typeof data.room.game_data.status === "string"
-          ? { type: data.room.game_data.status }
-          : data.room.game_data.status as GameStatus;
+        const gameStatusObj =
+          typeof data.room.game_data.status === "string"
+            ? { type: data.room.game_data.status }
+            : (data.room.game_data.status as GameStatus);
 
-        // Set game status for UI display
         setGameStatus(gameStatusObj.type);
 
         const livePos = calculateLivePosition(
@@ -123,7 +165,7 @@ export default function RoomPage({
     }
   }, [id, router]);
 
-  // Get current user ID and name
+  // Get current user
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -140,15 +182,23 @@ export default function RoomPage({
     fetchRoomData();
   }, [fetchRoomData]);
 
-  // Fetch and cache scoring plays for smart score calculation
+  // Check for welcome param
+  useEffect(() => {
+    if (searchParams.get("welcome") === "true") {
+      setShowWelcome(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("welcome");
+      router.replace(url.pathname, { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Fetch scoring plays
   useEffect(() => {
     if (!room) return;
 
     const fetchPlays = async () => {
       try {
         const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
-
-        // Fetch scoring plays from ESPN API using room.game_id
         const plays = await fetchGameScoringPlays(room.game_id, sport);
         setScoringPlays(plays);
       } catch (error) {
@@ -156,39 +206,34 @@ export default function RoomPage({
       }
     };
 
-    // Initial fetch
     fetchPlays();
 
-    // If game is live, refresh scoring plays every 60 seconds
     const gameData = room.game_data as GameData;
     if (gameData?.status) {
-      const statusType = typeof gameData.status === 'string'
-        ? gameData.status
-        : gameData.status.type;
+      const statusType =
+        typeof gameData.status === "string"
+          ? gameData.status
+          : gameData.status.type;
 
       if (checkIfGameLive(statusType)) {
-        const interval = setInterval(fetchPlays, 60000); // 60 seconds
+        const interval = setInterval(fetchPlays, 60000);
         return () => clearInterval(interval);
       }
     }
   }, [room]);
 
-  // Fetch live game status from ESPN API periodically
+  // Fetch live game status
   useEffect(() => {
     if (!room) return;
 
     const updateLiveStatus = async () => {
       try {
         const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
-
-        // Fetch current game status from ESPN
         const freshStatus = await fetchGameStatus(room.game_id, sport);
 
         if (freshStatus) {
-          // Update game status for UI
           setGameStatus(freshStatus.type);
 
-          // Calculate new live position
           const gameStatusObj: GameStatus = {
             type: freshStatus.type,
             displayClock: freshStatus.displayClock,
@@ -203,20 +248,15 @@ export default function RoomPage({
       }
     };
 
-    // Initial fetch
     updateLiveStatus();
-
-    // Refresh every 30 seconds for all games (will show live position when game starts)
-    const interval = setInterval(updateLiveStatus, 30000); // 30 seconds
-
+    const interval = setInterval(updateLiveStatus, 30000);
     return () => clearInterval(interval);
   }, [room]);
 
-  // Realtime subscriptions for messages and room updates
+  // Realtime subscriptions
   useEffect(() => {
     const channel = supabase
       .channel(`room-${id}`)
-      // Postgres Changes: Listen for new messages (persistent)
       .on(
         "postgres_changes",
         {
@@ -226,13 +266,12 @@ export default function RoomPage({
           filter: `room_id=eq.${id}`,
         },
         (payload) => {
-          console.log('[REALTIME] New message received:', payload.new);
-          // Add new message to state with sender display name
           const newMessage = payload.new as ExtendedMessage;
 
-          // Enrich with sender display name and empty reactions from members
           setMembers((currentMembers) => {
-            const sender = currentMembers.find((m) => m.user_id === newMessage.user_id);
+            const sender = currentMembers.find(
+              (m) => m.user_id === newMessage.user_id
+            );
             const enrichedMessage: ExtendedMessage = {
               ...newMessage,
               sender_display_name: sender?.display_name || "Member",
@@ -244,23 +283,18 @@ export default function RoomPage({
               },
             };
 
-            console.log('[REALTIME] Enriched message:', enrichedMessage);
-
-            // Deduplicate: only add if not already in messages
             setMessages((prev) => {
               const exists = prev.some((msg) => msg.id === enrichedMessage.id);
-              if (exists) {
-                console.log('[REALTIME] Message already exists, skipping:', enrichedMessage.id);
-                return prev;
-              }
-              console.log('[REALTIME] Adding new message to state');
+              if (exists) return prev;
               return [...prev, enrichedMessage];
             });
-            return currentMembers; // Don't change members
+            return currentMembers;
           });
+
+          // Auto-scroll on new message
+          setTimeout(scrollToBottom, 100);
         }
       )
-      // Postgres Changes: Listen for room updates (persistent)
       .on(
         "postgres_changes",
         {
@@ -270,20 +304,19 @@ export default function RoomPage({
           filter: `id=eq.${id}`,
         },
         (payload) => {
-          // Update room data (e.g., name changes, game status updates)
           setRoom(payload.new as Room);
 
-          // Recalculate live position if game status changed
           const newRoom = payload.new as Room;
           if (newRoom.game_data) {
             const gameData = newRoom.game_data as GameData;
             if (gameData.status) {
-              const gameStatus = typeof gameData.status === "string"
-                ? { type: gameData.status }
-                : gameData.status as GameStatus;
+              const status =
+                typeof gameData.status === "string"
+                  ? { type: gameData.status }
+                  : (gameData.status as GameStatus);
 
               const livePos = calculateLivePosition(
-                gameStatus,
+                status,
                 newRoom.sport as "nfl" | "mlb" | "nba" | "nhl"
               );
               setLivePositionEncoded(livePos);
@@ -291,7 +324,6 @@ export default function RoomPage({
           }
         }
       )
-      // Postgres Changes: Listen for member changes (persistent)
       .on(
         "postgres_changes",
         {
@@ -301,11 +333,9 @@ export default function RoomPage({
           filter: `room_id=eq.${id}`,
         },
         () => {
-          // Refetch members when membership changes
           fetchRoomData();
         }
       )
-      // Postgres Changes: Listen for reaction changes
       .on(
         "postgres_changes",
         {
@@ -313,10 +343,7 @@ export default function RoomPage({
           schema: "public",
           table: "message_reactions",
         },
-        (payload) => {
-          console.log('[REALTIME] Reaction change detected:', payload.eventType, payload.new);
-          // Refetch room data when reactions change
-          // This will update all messages with new reaction counts
+        () => {
           fetchRoomData();
         }
       )
@@ -325,9 +352,9 @@ export default function RoomPage({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, supabase, fetchRoomData]);
+  }, [id, supabase, fetchRoomData, scrollToBottom]);
 
-  // Debounced DB save for position (every 30 seconds for recovery/persistence)
+  // Debounced position save
   const savePositionToDB = useRef(
     debounce(async (roomId: string, positionEncoded: number) => {
       try {
@@ -346,22 +373,19 @@ export default function RoomPage({
       } catch (err) {
         console.error("Error updating position:", err);
       }
-    }, 30000) // 30 seconds - sparse saves for recovery only
+    }, 30000)
   ).current;
 
-  // Update position with sparse DB saves
+  // Position change handler
   const handlePositionChange = useCallback(
     (newPositionEncoded: number) => {
-      // 1. Update UI immediately for responsive feel
       setCurrentPositionEncoded(newPositionEncoded);
-
-      // 2. Debounce DB save (every 30s for recovery/persistence)
       savePositionToDB(id, newPositionEncoded);
     },
     [id, savePositionToDB]
   );
 
-  // Jump to live position
+  // Go to live position
   const handleGoLive = useCallback(() => {
     if (livePositionEncoded !== null) {
       handlePositionChange(livePositionEncoded);
@@ -388,45 +412,7 @@ export default function RoomPage({
       }
     } catch (err) {
       console.error("Error updating spoiler setting:", err);
-      setShowSpoilers(!newValue); // Revert on error
-    }
-  };
-
-
-  // Start editing room name
-  const handleStartEdit = () => {
-    setEditedName(room?.name || "");
-    setIsEditing(true);
-  };
-
-  // Cancel editing
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedName("");
-  };
-
-  // Save room name
-  const handleSaveName = async () => {
-    if (!room) return;
-
-    try {
-      const response = await fetch(`/api/rooms/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editedName.trim() || null }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update room name");
-      }
-
-      const data = await response.json();
-      setRoom(data.room);
-      setIsEditing(false);
-      setEditedName("");
-    } catch (err) {
-      console.error("Error updating room name:", err);
-      alert("Failed to update room name. Please try again.");
+      setShowSpoilers(!newValue);
     }
   };
 
@@ -444,7 +430,6 @@ export default function RoomPage({
         throw new Error("Failed to delete room");
       }
 
-      // Redirect to dashboard after successful deletion
       router.push("/dashboard");
     } catch (err) {
       console.error("Error deleting room:", err);
@@ -454,17 +439,16 @@ export default function RoomPage({
     }
   };
 
-  // Calculate score at current position using cached scoring plays
+  // Calculate score at current position for header display
   const currentScore = useMemo(() => {
     if (!room || scoringPlays.length === 0) {
       return null;
     }
-
     const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
     return getScoreAtPosition(currentPositionEncoded, scoringPlays, sport);
   }, [currentPositionEncoded, scoringPlays, room]);
 
-  // Calculate visible messages count
+  // Visible/hidden message counts
   const visibleMessagesCount = useMemo(() => {
     if (showSpoilers) return messages.length;
 
@@ -481,9 +465,8 @@ export default function RoomPage({
     }).length;
   }, [messages, currentPositionEncoded, showSpoilers, room]);
 
-  // Calculate hidden messages count (messages beyond current position)
   const hiddenMessagesCount = useMemo(() => {
-    if (showSpoilers) return 0; // All messages visible, none hidden
+    if (showSpoilers) return 0;
 
     return messages.filter((msg) => {
       const msgPos =
@@ -494,13 +477,11 @@ export default function RoomPage({
               room.sport as "nfl" | "mlb" | "nba" | "nhl"
             )
           : 0);
-      return msgPos > currentPositionEncoded; // Count messages ahead of current position
+      return msgPos > currentPositionEncoded;
     }).length;
   }, [messages, currentPositionEncoded, showSpoilers, room]);
 
-  // Get message positions for markers with different categories
-  // When spoiler protection is OFF (showSpoilers = true), show all markers with colors
-  // When spoiler protection is ON (showSpoilers = false), only show past markers
+  // Message markers for timeline
   const messageMarkers = useMemo(() => {
     if (!room || !userId) {
       return {
@@ -530,19 +511,11 @@ export default function RoomPage({
       const isPast = msgPos <= currentPositionEncoded;
 
       if (isOwn) {
-        if (isPast || showSpoilers) {
-          ownPast.push(msgPos);
-        }
-        if (!isPast && showSpoilers) {
-          ownFuture.push(msgPos);
-        }
+        if (isPast || showSpoilers) ownPast.push(msgPos);
+        if (!isPast && showSpoilers) ownFuture.push(msgPos);
       } else {
-        if (isPast || showSpoilers) {
-          othersPast.push(msgPos);
-        }
-        if (!isPast && showSpoilers) {
-          othersFuture.push(msgPos);
-        }
+        if (isPast || showSpoilers) othersPast.push(msgPos);
+        if (!isPast && showSpoilers) othersFuture.push(msgPos);
       }
     });
 
@@ -556,24 +529,27 @@ export default function RoomPage({
     };
   }, [messages, room, userId, currentPositionEncoded, showSpoilers]);
 
-  // Legacy support - combine all markers for components expecting single array
   const messagePositions = useMemo(() => {
     return [...messageMarkers.own, ...messageMarkers.others];
   }, [messageMarkers]);
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Loading watch party...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <p className="text-gray-600 dark:text-gray-400">
+          Loading watch party...
+        </p>
       </div>
     );
   }
 
+  // Error state
   if (error || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full text-center">
-          <p className="text-red-600 font-semibold mb-4">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-8 max-w-md w-full text-center">
+          <p className="text-red-600 dark:text-red-400 font-semibold mb-4">
             {error || "Failed to load watch party"}
           </p>
           <button
@@ -590,267 +566,40 @@ export default function RoomPage({
   const gameData = room.game_data as GameData;
   const sport = room.sport as "nfl" | "mlb" | "nba" | "nhl";
   const isCreator = userId && room.created_by === userId;
+  const isLive =
+    gameStatus === "STATUS_IN_PROGRESS" ||
+    gameStatus === "IN_PROGRESS" ||
+    gameStatus === "LIVE";
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              {/* Room Name / Game Info */}
-              {isEditing ? (
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    placeholder="Enter party name (optional)"
-                    maxLength={100}
-                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-xl font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSaveName}
-                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    title="Save"
-                  >
-                    <CheckIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Cancel"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {room.name || `${gameData?.awayTeam} @ ${gameData?.homeTeam}`}
-                  </h1>
-                  {isCreator && (
-                    <button
-                      onClick={handleStartEdit}
-                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Edit party name"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm text-gray-600">
-                  {room.sport.toUpperCase()} Watch Party
-                  {room.name && ` • ${gameData?.awayTeam} @ ${gameData?.homeTeam}`}
-                </p>
-                {/* Game Status Badge */}
-                {gameStatus && (
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      gameStatus === "STATUS_IN_PROGRESS" || gameStatus === "IN_PROGRESS" || gameStatus === "LIVE"
-                        ? "bg-red-100 text-red-700 animate-pulse"
-                        : gameStatus === "STATUS_FINAL" || gameStatus === "POST" || gameStatus === "FINAL"
-                        ? "bg-gray-100 text-gray-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {gameStatus === "STATUS_IN_PROGRESS" || gameStatus === "IN_PROGRESS" || gameStatus === "LIVE" ? (
-                      <>
-                        <SignalIcon className="w-3 h-3" />
-                        LIVE
-                      </>
-                    ) : gameStatus === "STATUS_FINAL" || gameStatus === "POST" || gameStatus === "FINAL" ? (
-                      "FINAL"
-                    ) : (
-                      "SCHEDULED"
-                    )}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2 text-gray-600">
-                <UserGroupIcon className="w-4 h-4" />
-                <span className="text-sm">
-                  {memberCount} {memberCount === 1 ? "member" : "members"}
-                </span>
-              </div>
-              <ShareMenu
-                shareOptions={{
-                  userName,
-                  shareCode: room.share_code,
-                  roomName: room.name || undefined,
-                  gameName: `${gameData?.awayTeam} @ ${gameData?.homeTeam}`,
-                  sport: sport,
-                }}
-              />
-            </div>
-          </div>
+    <div className="flex flex-col bg-gray-50 dark:bg-gray-950" style={{ minHeight: 'calc(100vh - 64px)' }}>
+      {/* Game Info Panel */}
+      <GameInfoPanel
+        sport={sport}
+        positionEncoded={currentPositionEncoded}
+        gameStatus={gameStatus}
+        showSpoilers={showSpoilers}
+        onMenuClick={() => setShowDrawer(true)}
+        gameData={gameData}
+        currentScore={currentScore}
+      />
 
-          {/* Message Stats */}
-          <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1.5">
-              <ChatBubbleLeftIcon className="w-4 h-4" />
-              <span>
-                {visibleMessagesCount} / {messages.length} messages visible
-              </span>
-            </div>
-          </div>
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={() => setShowWelcome(false)}
+        shareCode={room.share_code}
+        roomName={room.name}
+        gameName={`${gameData?.awayTeam} @ ${gameData?.homeTeam}`}
+        sport={sport}
+        userName={userName}
+      />
 
-          {/* Members List */}
-          <div className="pt-4 border-t border-gray-200 mb-4">
-            <p className="font-medium text-gray-900 mb-2">Party Members</p>
-            <div className="flex flex-wrap gap-2">
-              {members.map((member) => {
-                const isCreator = member.user_id === room.created_by;
-                const isCurrentUser = member.user_id === userId;
-                const displayName =
-                  member.display_name || "Member";
-
-                return (
-                  <div
-                    key={member.user_id}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
-                      isCurrentUser
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {isCreator && (
-                      <StarIcon className="w-3.5 h-3.5 text-yellow-600" />
-                    )}
-                    <span className="font-medium">
-                      {displayName}
-                      {isCurrentUser && " (you)"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Extra Spoiler Protection Toggle */}
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-900">Extra Spoiler Protection</p>
-                <p className="text-xs text-gray-600">
-                  {showSpoilers
-                    ? "Timeline markers visible"
-                    : "Hide future comment markers on timeline"}
-                </p>
-              </div>
-              <button
-                onClick={handleToggleSpoilers}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  showSpoilers ? "bg-gray-400" : "bg-blue-600"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    showSpoilers ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-            {/* Hidden messages count */}
-            {!showSpoilers && hiddenMessagesCount > 0 && (
-              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                <ChatBubbleLeftIcon className="w-3 h-3 inline mr-1" />
-                {hiddenMessagesCount} {hiddenMessagesCount === 1 ? "comment" : "comments"} ahead (markers hidden)
-              </div>
-            )}
-          </div>
-
-          {/* Delete Room (Creator Only) */}
-          {isCreator && (
-            <div className="pt-4 border-t border-gray-200 mt-4">
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
-              >
-                <TrashIcon className="w-4 h-4" />
-                Delete Watch Party
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <TrashIcon className="w-6 h-6 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Delete Watch Party?</h3>
-                  <p className="text-sm text-gray-600">This action cannot be undone</p>
-                </div>
-              </div>
-              <p className="text-gray-700 mb-6">
-                This will permanently delete this watch party and all associated messages. All members will lose access.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDeleteRoom}
-                  disabled={isDeleting}
-                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
-                >
-                  {isDeleting ? "Deleting..." : "Delete Party"}
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isDeleting}
-                  className="flex-1 border-2 border-gray-300 hover:border-gray-400 disabled:border-gray-200 disabled:text-gray-400 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Position Slider - New Box Score UI */}
-        <BoxScorePosition
-          sport={sport}
-          positionEncoded={currentPositionEncoded}
-          onChange={handlePositionChange}
-          gameData={gameData}
-          messagePositions={messagePositions}
-          messageMarkers={messageMarkers}
-          livePositionEncoded={livePositionEncoded}
-          onGoLive={handleGoLive}
-        />
-
-        {/* Message Composer */}
-        {userId && (
-          <MessageComposerEnhanced
-            roomId={id}
-            currentPositionEncoded={currentPositionEncoded}
-            sport={sport}
-            onMessageSent={(message) => {
-              console.log('[OPTIMISTIC] Adding message to local state:', message.id);
-              setMessages((prev) => {
-                // Check if message already exists (shouldn't, but safety check)
-                const exists = prev.some((msg) => msg.id === message.id);
-                if (exists) {
-                  console.log('[OPTIMISTIC] Message already exists, skipping');
-                  return prev;
-                }
-                return [...prev, message];
-              });
-            }}
-          />
-        )}
-
-        {/* Messages */}
-        {userId && (
-          <MessageFeedEnhanced
+      {/* Message List - Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto">
+          {userId && (
+            <ChatMessageList
             messages={messages}
             currentPositionEncoded={currentPositionEncoded}
             sport={sport}
@@ -858,23 +607,29 @@ export default function RoomPage({
             currentUserId={userId}
             currentUserDisplayName={userName}
             scoringPlays={scoringPlays}
+            hiddenMessagesCount={hiddenMessagesCount}
+            roomCreatedAt={room.created_at}
+            creatorName={members.find(m => m.user_id === room.created_by)?.display_name || userName}
+            creatorId={room.created_by}
+            members={members}
             onReactionToggled={(messageId, reactionType, action) => {
-              console.log('[OPTIMISTIC] Updating reaction locally:', { messageId, reactionType, action });
               setMessages((prev) =>
                 prev.map((msg) => {
                   if (msg.id !== messageId) return msg;
 
-                  const reactions = msg.reactions ? { ...msg.reactions } : {
-                    thumbs_up: [],
-                    thumbs_down: [],
-                    question: [],
-                    exclamation: [],
-                  };
+                  const reactions = msg.reactions
+                    ? { ...msg.reactions }
+                    : {
+                        thumbs_up: [],
+                        thumbs_down: [],
+                        question: [],
+                        exclamation: [],
+                      };
 
-                  const reactionArray = reactions[reactionType as keyof MessageReactions] || [];
+                  const reactionArray =
+                    reactions[reactionType as keyof MessageReactions] || [];
 
                   if (action === "added") {
-                    // Add current user to reaction
                     if (!reactionArray.some((u) => u.is_current_user)) {
                       reactions[reactionType as keyof MessageReactions] = [
                         ...reactionArray,
@@ -886,10 +641,8 @@ export default function RoomPage({
                       ];
                     }
                   } else {
-                    // Remove current user from reaction
-                    reactions[reactionType as keyof MessageReactions] = reactionArray.filter(
-                      (u) => !u.is_current_user
-                    );
+                    reactions[reactionType as keyof MessageReactions] =
+                      reactionArray.filter((u) => !u.is_current_user);
                   }
 
                   return { ...msg, reactions };
@@ -898,13 +651,504 @@ export default function RoomPage({
             }}
           />
         )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Compact Timeline + Composer Container */}
+      <div className="max-w-3xl mx-auto w-full mb-4">
+        {/* Compact Timeline */}
+      <CompactTimeline
+        sport={sport}
+        positionEncoded={currentPositionEncoded}
+        onChange={handlePositionChange}
+        livePositionEncoded={livePositionEncoded}
+        onGoLive={handleGoLive}
+        isLive={isLive}
+        messagePositions={messagePositions}
+      />
+
+      {/* Message Composer */}
+      {userId && (
+        <ChatComposer
+          roomId={id}
+          currentPositionEncoded={currentPositionEncoded}
+          sport={sport}
+          onMessageSent={(message) => {
+            setMessages((prev) => {
+              const exists = prev.some((msg) => msg.id === message.id);
+              if (exists) return prev;
+              return [...prev, message];
+            });
+            setTimeout(scrollToBottom, 100);
+          }}
+        />
+      )}
+      </div>
+
+      {/* Room Drawer */}
+      <RoomDrawer
+        isOpen={showDrawer}
+        onClose={() => setShowDrawer(false)}
+        roomName={room.name}
+        shareCode={room.share_code}
+        sport={sport}
+        gameData={gameData}
+        creatorId={room.created_by}
+        userId={userId || ""}
+        userName={userName}
+        members={members}
+        positionEncoded={currentPositionEncoded}
+        onPositionChange={handlePositionChange}
+        livePositionEncoded={livePositionEncoded}
+        onGoLive={handleGoLive}
+        messagePositions={messagePositions}
+        messageMarkers={messageMarkers}
+        showSpoilers={showSpoilers}
+        onToggleSpoilers={handleToggleSpoilers}
+        hiddenMessagesCount={hiddenMessagesCount}
+        gameStatus={gameStatus}
+        onDeleteRoom={() => setShowDeleteConfirm(true)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <TrashIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Delete Watch Party?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              This will permanently delete this watch party and all associated
+              messages.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteRoom}
+                disabled={isDeleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
+              >
+                {isDeleting ? "Deleting..." : "Delete Party"}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 font-semibold py-2.5 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// System message component
+function SystemMessage({ text, time }: { text: string; time?: string }) {
+  return (
+    <div className="flex justify-center py-2">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-500 dark:text-gray-400">
+        <span>{text}</span>
+        {time && <span className="opacity-60">{time}</span>}
       </div>
     </div>
   );
 }
 
-// Enhanced MessageComposer that uses encoded positions
-function MessageComposerEnhanced({
+// Apple-style member avatar component
+function MemberAvatar({ name, isCreator }: { name: string; isCreator?: boolean }) {
+  // Generate initials from name
+  const initials = name
+    .split(/[\s@]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+
+  // Generate consistent color based on name
+  const colors = [
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-orange-500",
+    "bg-pink-500",
+    "bg-teal-500",
+    "bg-indigo-500",
+    "bg-rose-500",
+  ];
+  const colorIndex = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  const bgColor = colors[colorIndex];
+
+  // Get display name (before @ if email)
+  const displayName = name.split("@")[0];
+
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className={`relative w-14 h-14 ${bgColor} rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-md`}>
+        {initials || "?"}
+        {isCreator && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
+            <span className="text-xs">⭐</span>
+          </div>
+        )}
+      </div>
+      <span className="text-xs text-gray-600 dark:text-gray-400 text-center font-medium">
+        {displayName}
+      </span>
+    </div>
+  );
+}
+
+// Members display component
+function MembersDisplay({ members, creatorId }: { members: RoomMember[]; creatorId: string }) {
+  if (!members || members.length === 0) return null;
+
+  return (
+    <div className="py-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-3 uppercase tracking-wider font-medium">
+        Watching Together
+      </p>
+      <div className="flex justify-center gap-4 flex-wrap">
+        {members.map((member) => (
+          <MemberAvatar
+            key={member.user_id}
+            name={member.display_name || "Guest"}
+            isCreator={member.user_id === creatorId}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Chat-style Message List Component
+function ChatMessageList({
+  messages,
+  currentPositionEncoded,
+  sport,
+  showSpoilers,
+  currentUserId,
+  currentUserDisplayName,
+  scoringPlays,
+  hiddenMessagesCount,
+  onReactionToggled,
+  roomCreatedAt,
+  creatorName,
+  creatorId,
+  members,
+}: {
+  messages: ExtendedMessage[];
+  currentPositionEncoded: number;
+  sport: "nfl" | "mlb" | "nba" | "nhl";
+  showSpoilers: boolean;
+  currentUserId: string;
+  currentUserDisplayName: string;
+  scoringPlays: ScoringPlay[];
+  hiddenMessagesCount: number;
+  onReactionToggled: (
+    messageId: string,
+    reactionType: string,
+    action: "added" | "removed"
+  ) => void;
+  roomCreatedAt?: string;
+  creatorName?: string;
+  creatorId?: string;
+  members?: RoomMember[];
+}) {
+  const toggleReaction = async (messageId: string, reactionType: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction_type: reactionType }),
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      onReactionToggled(messageId, reactionType, data.action);
+    } catch (err) {
+      console.error("Error toggling reaction:", err);
+    }
+  };
+
+  // Filter visible messages
+  const visibleMessages = useMemo(() => {
+    return messages.filter((msg) => {
+      const msgPos =
+        msg.position_encoded ?? encodePosition(msg.position as never, sport);
+      return isPositionVisible(msgPos, currentPositionEncoded);
+    });
+  }, [messages, currentPositionEncoded, sport]);
+
+  // Format room created time
+  const roomCreatedTime = roomCreatedAt
+    ? new Date(roomCreatedAt).toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : null;
+
+  // Build system events (room created, members joined)
+  const systemEvents = useMemo(() => {
+    const events: { id: string; text: string; time: string; timestamp: number }[] = [];
+
+    // Room created event
+    if (roomCreatedAt) {
+      const createdDate = new Date(roomCreatedAt);
+      events.push({
+        id: "room-created",
+        text: `${creatorName || "Someone"} started the watch party`,
+        time: createdDate.toLocaleString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        timestamp: createdDate.getTime(),
+      });
+    }
+
+    // Member joined events (excluding creator)
+    if (members) {
+      members.forEach((member) => {
+        if (member.display_name !== creatorName) {
+          const joinedDate = new Date(member.joined_at);
+          events.push({
+            id: `joined-${member.user_id}`,
+            text: `${member.display_name || "Someone"} joined`,
+            time: joinedDate.toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            timestamp: joinedDate.getTime(),
+          });
+        }
+      });
+    }
+
+    return events.sort((a, b) => a.timestamp - b.timestamp);
+  }, [roomCreatedAt, creatorName, members]);
+
+  return (
+    <div className="p-4 space-y-3">
+      {/* System events (room created, members joined) */}
+      {systemEvents.map((event) => (
+        <SystemMessage key={event.id} text={event.text} time={event.time} />
+      ))}
+
+      {/* Members display - Apple style avatars */}
+      {members && members.length > 0 && creatorId && (
+        <MembersDisplay members={members} creatorId={creatorId} />
+      )}
+
+      {/* Empty state - compact */}
+      {visibleMessages.length === 0 && (
+        <div className="py-8 text-center">
+          <ChatBubbleLeftIcon className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {messages.length === 0
+              ? "Share your first reaction!"
+              : "No messages at your position yet"}
+          </p>
+        </div>
+      )}
+      {visibleMessages.map((msg) => {
+        const isOwnMessage = msg.user_id === currentUserId;
+        const msgPos =
+          msg.position_encoded ?? encodePosition(msg.position as never, sport);
+        const formattedPos = formatGamePosition(msg.position as never, sport);
+
+        // Score at position
+        const scoreAtPosition =
+          scoringPlays.length > 0
+            ? getScoreAtPosition(msgPos, scoringPlays, sport)
+            : null;
+
+        // Time
+        const messageTime = new Date(msg.created_at).toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        const reactions = msg.reactions || {
+          thumbs_up: [],
+          thumbs_down: [],
+          question: [],
+          exclamation: [],
+        };
+
+        return (
+          <div
+            key={msg.id}
+            className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] ${
+                isOwnMessage ? "order-1" : "order-2"
+              }`}
+            >
+              {/* Sender name for other users */}
+              {!isOwnMessage && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 ml-3">
+                  {msg.sender_display_name || "Member"}
+                </p>
+              )}
+
+              {/* Message bubble */}
+              <div
+                className={`rounded-2xl px-4 py-2 ${
+                  isOwnMessage
+                    ? "bg-blue-600 text-white rounded-br-md"
+                    : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-700"
+                }`}
+              >
+                <p className="text-sm">{msg.content}</p>
+              </div>
+
+              {/* Meta info */}
+              <div
+                className={`flex items-center gap-2 mt-1 px-1 text-xs text-gray-500 dark:text-gray-400 ${
+                  isOwnMessage ? "justify-end" : "justify-start"
+                }`}
+              >
+                <span>{messageTime}</span>
+                <span className="opacity-50">|</span>
+                <span>{formattedPos}</span>
+                {scoreAtPosition && (
+                  <>
+                    <span className="opacity-50">|</span>
+                    <span className="font-mono">
+                      {scoreAtPosition.awayScore}-{scoreAtPosition.homeScore}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Reactions */}
+              <div
+                className={`flex flex-wrap gap-1 mt-1 ${
+                  isOwnMessage ? "justify-end" : "justify-start"
+                }`}
+              >
+                {reactions.thumbs_up.length > 0 && (
+                  <ReactionBubble
+                    emoji="👍"
+                    count={reactions.thumbs_up.length}
+                    isActive={reactions.thumbs_up.some((u) => u.is_current_user)}
+                    onClick={() => toggleReaction(msg.id, "thumbs_up")}
+                  />
+                )}
+                {reactions.thumbs_down.length > 0 && (
+                  <ReactionBubble
+                    emoji="👎"
+                    count={reactions.thumbs_down.length}
+                    isActive={reactions.thumbs_down.some(
+                      (u) => u.is_current_user
+                    )}
+                    onClick={() => toggleReaction(msg.id, "thumbs_down")}
+                  />
+                )}
+                {reactions.question.length > 0 && (
+                  <ReactionBubble
+                    emoji="❓"
+                    count={reactions.question.length}
+                    isActive={reactions.question.some((u) => u.is_current_user)}
+                    onClick={() => toggleReaction(msg.id, "question")}
+                  />
+                )}
+                {reactions.exclamation.length > 0 && (
+                  <ReactionBubble
+                    emoji="❗"
+                    count={reactions.exclamation.length}
+                    isActive={reactions.exclamation.some(
+                      (u) => u.is_current_user
+                    )}
+                    onClick={() => toggleReaction(msg.id, "exclamation")}
+                  />
+                )}
+
+                {/* Quick reaction buttons */}
+                <div className="flex gap-0.5 ml-1 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => toggleReaction(msg.id, "thumbs_up")}
+                    className="p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() => toggleReaction(msg.id, "thumbs_down")}
+                    className="p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    👎
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Hidden messages indicator */}
+      {hiddenMessagesCount > 0 && (
+        <div className="flex items-center justify-center py-4">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
+            <LockClosedIcon className="w-4 h-4" />
+            <span>
+              {hiddenMessagesCount}{" "}
+              {hiddenMessagesCount === 1 ? "message" : "messages"} ahead
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Reaction bubble component
+function ReactionBubble({
+  emoji,
+  count,
+  isActive,
+  onClick,
+}: {
+  emoji: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
+        isActive
+          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+          : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+      }`}
+    >
+      <span>{emoji}</span>
+      <span className="font-medium">{count}</span>
+    </button>
+  );
+}
+
+// Chat-style Message Composer
+function ChatComposer({
   roomId,
   currentPositionEncoded,
   sport,
@@ -921,7 +1165,6 @@ function MessageComposerEnhanced({
   const handleSend = async () => {
     if (!content.trim() || isSending) return;
 
-    console.log('[MESSAGE] Sending message:', { content: content.trim(), position_encoded: currentPositionEncoded });
     setIsSending(true);
     try {
       const response = await fetch("/api/messages", {
@@ -935,14 +1178,11 @@ function MessageComposerEnhanced({
       });
 
       if (!response.ok) {
-        console.error('[MESSAGE] Failed to send, status:', response.status);
         throw new Error("Failed to send message");
       }
 
       const data = await response.json();
-      console.log('[MESSAGE] Message sent successfully:', data);
 
-      // OPTIMISTIC UPDATE: Add message to local state immediately
       const newMessage: ExtendedMessage = {
         ...data.message,
         sender_display_name: "You",
@@ -957,7 +1197,7 @@ function MessageComposerEnhanced({
 
       setContent("");
     } catch (err) {
-      console.error("[MESSAGE] Error sending message:", err);
+      console.error("Error sending message:", err);
       alert("Failed to send message. Please try again.");
     } finally {
       setIsSending(false);
@@ -965,8 +1205,8 @@ function MessageComposerEnhanced({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <div className="flex gap-3">
+    <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-6">
+      <div className="flex items-center gap-3">
         <input
           type="text"
           value={content}
@@ -974,309 +1214,15 @@ function MessageComposerEnhanced({
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
           placeholder="Share your reaction..."
           maxLength={500}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 px-5 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
         />
         <button
           onClick={handleSend}
           disabled={!content.trim() || isSending}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-colors"
         >
           {isSending ? "..." : "Send"}
         </button>
-      </div>
-      <p className="text-xs text-gray-500 mt-2">
-        Message will be tagged at your current position
-      </p>
-    </div>
-  );
-}
-
-// Reaction Pill Component
-function ReactionPill({
-  emoji,
-  users,
-  onToggle,
-}: {
-  emoji: string;
-  users: ReactionUser[];
-  onToggle: () => void;
-}) {
-  if (users.length === 0) return null;
-
-  const hasUserReacted = users.some((u) => u.is_current_user);
-
-  // Generate display text
-  const getDisplayText = () => {
-    if (users.length === 1) {
-      return users[0].is_current_user ? "You" : users[0].display_name;
-    }
-
-    if (users.length === 2) {
-      const names = users.map((u) =>
-        u.is_current_user ? "You" : u.display_name
-      );
-      return names.join(", ");
-    }
-
-    // 3+ reactions
-    const [first, second, ...rest] = users;
-    const firstName = first.is_current_user ? "You" : first.display_name;
-    const secondName = second.is_current_user ? "You" : second.display_name;
-
-    if (users.length === 3) {
-      const thirdName = rest[0].is_current_user
-        ? "You"
-        : rest[0].display_name;
-      return `${firstName}, ${secondName}, ${thirdName}`;
-    }
-
-    return `${firstName}, ${secondName}, +${rest.length} others`;
-  };
-
-  const displayText = getDisplayText();
-  const tooltipText = users
-    .map((u) => (u.is_current_user ? "You" : u.display_name))
-    .join(", ");
-
-  return (
-    <button
-      onClick={onToggle}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors ${
-        hasUserReacted
-          ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-          : "bg-gray-100 text-gray-600 border-2 border-transparent hover:border-gray-300"
-      }`}
-      title={tooltipText}
-    >
-      <span>{emoji}</span>
-      <span className="font-medium">{displayText}</span>
-    </button>
-  );
-}
-
-// Enhanced MessageFeed that uses encoded positions for filtering
-function MessageFeedEnhanced({
-  messages,
-  currentPositionEncoded,
-  sport,
-  showSpoilers,
-  currentUserId,
-  currentUserDisplayName,
-  scoringPlays,
-  onReactionToggled,
-}: {
-  messages: ExtendedMessage[];
-  currentPositionEncoded: number;
-  sport: "nfl" | "mlb" | "nba" | "nhl";
-  showSpoilers: boolean;
-  currentUserId: string;
-  currentUserDisplayName: string;
-  scoringPlays: ScoringPlay[];
-  onReactionToggled: (messageId: string, reactionType: string, action: "added" | "removed") => void;
-}) {
-  const toggleReaction = async (
-    messageId: string,
-    reactionType: string
-  ) => {
-    console.log('[REACTION] Toggling reaction:', { messageId, reactionType });
-    try {
-      const response = await fetch(`/api/messages/${messageId}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reaction_type: reactionType }),
-      });
-
-      if (!response.ok) {
-        console.error("[REACTION] Failed to toggle, status:", response.status);
-        return;
-      }
-
-      const data = await response.json();
-      console.log('[REACTION] Toggle successful:', data);
-
-      // OPTIMISTIC UPDATE: Update local state immediately
-      onReactionToggled(messageId, reactionType, data.action);
-    } catch (err) {
-      console.error("[REACTION] Error toggling reaction:", err);
-    }
-  };
-  // Messages are ALWAYS filtered to only show at or before current position
-  // Spoiler setting only affects timeline markers, not message visibility
-  const visibleMessages = useMemo(() => {
-    return messages.filter((msg) => {
-      const msgPos =
-        msg.position_encoded ?? encodePosition(msg.position as never, sport);
-      return isPositionVisible(msgPos, currentPositionEncoded);
-    });
-  }, [messages, currentPositionEncoded, sport]);
-
-  if (messages.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <ChatBubbleLeftIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600">No messages yet</p>
-        <p className="text-sm text-gray-500">Be the first to share a reaction!</p>
-      </div>
-    );
-  }
-
-  if (visibleMessages.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <EyeIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600">No messages at your current position</p>
-        <p className="text-sm text-gray-500">
-          Advance your position or toggle spoiler protection to see messages
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900">
-          Messages ({visibleMessages.length})
-        </h3>
-      </div>
-      <div className="max-h-96 overflow-y-auto">
-        {visibleMessages.map((msg) => {
-          const msgPos =
-            msg.position_encoded ?? encodePosition(msg.position as never, sport);
-          const formattedPos = formatGamePosition(
-            msg.position as never,
-            sport
-          );
-          const isOwnMessage = msg.user_id === currentUserId;
-
-          // Calculate score at this message's position
-          const scoreAtPosition = scoringPlays.length > 0
-            ? getScoreAtPosition(msgPos, scoringPlays, sport)
-            : null;
-
-          // Format timestamp in Eastern Time
-          const messageTime = new Date(msg.created_at).toLocaleString("en-US", {
-            timeZone: "America/New_York",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          });
-
-          const reactions = msg.reactions || {
-            thumbs_up: [],
-            thumbs_down: [],
-            question: [],
-            exclamation: [],
-          };
-
-          return (
-            <div
-              key={msg.id}
-              className={`group p-4 border-l-4 ${
-                isOwnMessage
-                  ? "bg-blue-50 border-blue-500"
-                  : "bg-white border-gray-300"
-              }`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs font-semibold ${
-                        isOwnMessage ? "text-blue-700" : "text-gray-700"
-                      }`}
-                    >
-                      {isOwnMessage
-                        ? "You"
-                        : msg.sender_display_name || "Member"}
-                    </span>
-                    {scoreAtPosition && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 rounded font-mono text-gray-600">
-                        {scoreAtPosition.awayScore}-{scoreAtPosition.homeScore}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {messageTime} ET
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500 font-medium">
-                  {formattedPos}
-                </span>
-              </div>
-              <p className="text-gray-900 text-sm leading-relaxed mb-2">
-                {msg.content}
-              </p>
-
-              {/* Reactions */}
-              <div className="flex flex-wrap gap-2 items-center mt-2">
-                {/* Existing reactions */}
-                {reactions.thumbs_up.length > 0 && (
-                  <ReactionPill
-                    emoji="👍"
-                    users={reactions.thumbs_up}
-                    onToggle={() => toggleReaction(msg.id, "thumbs_up")}
-                  />
-                )}
-                {reactions.thumbs_down.length > 0 && (
-                  <ReactionPill
-                    emoji="👎"
-                    users={reactions.thumbs_down}
-                    onToggle={() => toggleReaction(msg.id, "thumbs_down")}
-                  />
-                )}
-                {reactions.question.length > 0 && (
-                  <ReactionPill
-                    emoji="❓"
-                    users={reactions.question}
-                    onToggle={() => toggleReaction(msg.id, "question")}
-                  />
-                )}
-                {reactions.exclamation.length > 0 && (
-                  <ReactionPill
-                    emoji="❗"
-                    users={reactions.exclamation}
-                    onToggle={() => toggleReaction(msg.id, "exclamation")}
-                  />
-                )}
-
-                {/* Always visible add reaction buttons */}
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => toggleReaction(msg.id, "thumbs_up")}
-                    className="p-1.5 text-lg hover:bg-gray-200 rounded transition-colors opacity-60 hover:opacity-100"
-                    title="Thumbs up"
-                  >
-                    👍
-                  </button>
-                  <button
-                    onClick={() => toggleReaction(msg.id, "thumbs_down")}
-                    className="p-1.5 text-lg hover:bg-gray-200 rounded transition-colors opacity-60 hover:opacity-100"
-                    title="Thumbs down"
-                  >
-                    👎
-                  </button>
-                  <button
-                    onClick={() => toggleReaction(msg.id, "question")}
-                    className="p-1.5 text-lg hover:bg-gray-200 rounded transition-colors opacity-60 hover:opacity-100"
-                    title="Question"
-                  >
-                    ❓
-                  </button>
-                  <button
-                    onClick={() => toggleReaction(msg.id, "exclamation")}
-                    className="p-1.5 text-lg hover:bg-gray-200 rounded transition-colors opacity-60 hover:opacity-100"
-                    title="Exclamation"
-                  >
-                    ❗
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

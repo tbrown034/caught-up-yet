@@ -1,3 +1,5 @@
+import { API_ENDPOINTS, ESPN_SPORT_PATHS } from "@/constants/api";
+
 export type Sport = "nfl" | "mlb" | "nba" | "nhl" | "cfb";
 
 export interface ESPNGame {
@@ -25,15 +27,9 @@ export interface ESPNGame {
   }[];
 }
 
-const ESPN_BASE_URL = "https://site.api.espn.com/apis/site/v2/sports";
-
-const SPORT_PATHS = {
-  nfl: "football/nfl",
-  mlb: "baseball/mlb",
-  nba: "basketball/nba",
-  nhl: "hockey/nhl",
-  cfb: "football/college-football",
-} as const;
+// Use centralized API constants
+const ESPN_BASE_URL = API_ENDPOINTS.ESPN_BASE;
+const SPORT_PATHS = ESPN_SPORT_PATHS;
 
 function formatDateForAPI(date: Date): string {
   const year = date.getFullYear();
@@ -126,6 +122,25 @@ function isBigTenGame(game: ESPNGame): boolean {
   return game.competitors.some((c) => BIG_TEN_TEAMS.has(c.team.abbreviation.toUpperCase()));
 }
 
+/**
+ * Check if a game actually occurs on the requested date
+ * ESPN API sometimes returns games across multiple date queries
+ * This ensures we only show games on the day they're actually scheduled
+ */
+function isGameOnDate(game: ESPNGame, requestedDate: Date): boolean {
+  const gameDate = new Date(game.date);
+
+  // Normalize both dates to compare just the calendar day (in local timezone)
+  const gameDateLocal = new Date(gameDate.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const requestedDateNormalized = new Date(requestedDate);
+
+  return (
+    gameDateLocal.getFullYear() === requestedDateNormalized.getFullYear() &&
+    gameDateLocal.getMonth() === requestedDateNormalized.getMonth() &&
+    gameDateLocal.getDate() === requestedDateNormalized.getDate()
+  );
+}
+
 export async function fetchAllSportsGames(date: Date): Promise<ESPNGame[]> {
   const [nflGames, mlbGames, nbaGames, nhlGames, cfbGames] = await Promise.all([
     fetchSportGames("nfl", date),
@@ -135,10 +150,14 @@ export async function fetchAllSportsGames(date: Date): Promise<ESPNGame[]> {
     fetchSportGames("cfb", date),
   ]);
 
-  // Filter CFB to only Big Ten games
-  const bigTenGames = cfbGames.filter(isBigTenGame);
+  // Filter CFB games:
+  // 1. Must be a Big Ten game
+  // 2. Must actually be scheduled on the requested date (ESPN API returns games across date boundaries)
+  const filteredCfbGames = cfbGames
+    .filter(isBigTenGame)
+    .filter((game) => isGameOnDate(game, date));
 
-  return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames, ...bigTenGames].sort(
+  return [...nflGames, ...mlbGames, ...nbaGames, ...nhlGames, ...filteredCfbGames].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 }

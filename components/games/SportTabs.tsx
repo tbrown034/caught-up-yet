@@ -23,7 +23,7 @@ export default function SportTabs({
   ];
 
   return (
-    <div className="flex justify-center gap-2 mb-8 overflow-x-auto">
+    <div className="flex justify-start sm:justify-center gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
       {tabs.map((tab) => {
         const isSelected = selectedSport === tab.id;
         const count = tab.id === "all"
@@ -35,23 +35,23 @@ export default function SportTabs({
             key={tab.id}
             onClick={() => onSportChange(tab.id)}
             className={`
-              px-6 py-3 rounded-lg font-semibold transition-all
+              px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all flex-shrink-0
               ${
                 isSelected
                   ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               }
             `}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 sm:gap-2">
               {tab.label}
               <span
                 className={`
-                  text-xs px-2 py-0.5 rounded-full
+                  text-xs px-1.5 sm:px-2 py-0.5 rounded-full
                   ${
                     isSelected
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-600"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                   }
                 `}
               >

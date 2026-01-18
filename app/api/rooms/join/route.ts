@@ -6,7 +6,6 @@ import { getInitialEncodedPosition } from "@/lib/position-encoding";
 
 // POST /api/rooms/join - Join a room by share code
 export async function POST(request: Request) {
-  console.log('[JOIN] ========== JOIN REQUEST START ==========');
   try {
     const supabase = await createClient();
 
@@ -16,15 +15,7 @@ export async function POST(request: Request) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    console.log('[JOIN] Auth check:', {
-      hasUser: !!user,
-      userId: user?.id,
-      isAnonymous: user?.is_anonymous,
-      authError: authError?.message
-    });
-
     if (authError || !user) {
-      console.log('[JOIN] Auth failed, returning 401');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -32,10 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { share_code, display_name } = body;
 
-    console.log('[JOIN] Request body:', { share_code, display_name, hasDisplayName: !!display_name });
-
     if (!share_code) {
-      console.log('[JOIN] Missing share code, returning 400');
       return NextResponse.json(
         { error: "Share code is required" },
         { status: 400 }
@@ -49,26 +37,26 @@ export async function POST(request: Request) {
 
     if (isAnonymous) {
       if (!display_name) {
-        console.log('[JOIN] Guest missing display name, returning 400');
         return NextResponse.json(
           { error: "Display name is required for guests" },
           { status: 400 }
         );
       }
-      memberDisplayName = display_name;
+      if (typeof display_name !== "string" || display_name.trim().length > 50) {
+        return NextResponse.json(
+          { error: "Display name must be 50 characters or less" },
+          { status: 400 }
+        );
+      }
+      memberDisplayName = display_name.trim();
     } else {
       memberDisplayName = user.email?.split("@")[0] || null;
     }
 
-    console.log('[JOIN] Display name determined:', { memberDisplayName, isAnonymous });
-
     // Normalize and validate share code
     const normalizedCode = normalizeShareCode(share_code);
 
-    console.log('[JOIN] Share code normalized:', { original: share_code, normalized: normalizedCode });
-
     if (!isValidShareCode(normalizedCode)) {
-      console.log('[JOIN] Invalid share code format, returning 400');
       return NextResponse.json(
         { error: "Invalid share code format" },
         { status: 400 }
@@ -78,7 +66,6 @@ export async function POST(request: Request) {
     // Find room by share code
     // Note: We use order + limit instead of .single() to handle duplicate codes gracefully
     // This takes the most recently created active room with this code
-    console.log('[JOIN] Looking for room with code:', normalizedCode);
     const { data: rooms, error: roomError } = await supabase
       .from("rooms")
       .select("*")
@@ -88,7 +75,6 @@ export async function POST(request: Request) {
       .limit(1);
 
     const room = rooms?.[0];
-    console.log('[JOIN] Room query result:', { found: !!room, count: rooms?.length, error: roomError?.message });
 
     if (roomError || !room) {
       // Try to find ANY room with this code (ignore is_active) to give better error
@@ -104,7 +90,6 @@ export async function POST(request: Request) {
       if (anyRoom) {
         // Check if expired
         if (new Date(anyRoom.expires_at) < new Date()) {
-          console.log('[JOIN] Room expired:', normalizedCode, 'expired at:', anyRoom.expires_at);
           return NextResponse.json(
             { error: "This watch party has expired. Create a new one to continue." },
             { status: 410 }
@@ -112,7 +97,6 @@ export async function POST(request: Request) {
         }
 
         // Not active for some other reason
-        console.log('[JOIN] Room not active:', normalizedCode, 'is_active:', anyRoom.is_active);
         return NextResponse.json(
           { error: "This watch party is no longer active." },
           { status: 410 }
@@ -125,14 +109,7 @@ export async function POST(request: Request) {
     }
 
     // Check if room has expired
-    console.log('[JOIN] Checking expiration:', {
-      expiresAt: room.expires_at,
-      now: new Date().toISOString(),
-      isExpired: new Date(room.expires_at) < new Date()
-    });
-
     if (new Date(room.expires_at) < new Date()) {
-      console.log('[JOIN] Room expired, returning 410');
       return NextResponse.json(
         { error: "This room has expired" },
         { status: 410 }
@@ -140,7 +117,6 @@ export async function POST(request: Request) {
     }
 
     // Check if user is already a member
-    console.log('[JOIN] Checking existing membership...');
     const { data: existingMember } = await supabase
       .from("room_members")
       .select("*")
@@ -148,11 +124,8 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
-    console.log('[JOIN] Existing member check:', { isExistingMember: !!existingMember });
-
     if (existingMember) {
       // User already in room, just return room info
-      console.log('[JOIN] User already a member, returning room');
       return NextResponse.json({
         room,
         already_member: true,
@@ -160,15 +133,12 @@ export async function POST(request: Request) {
     }
 
     // Add user as member
-    console.log('[JOIN] Adding user as new member...');
     const initialPosition = getInitialPosition(
       room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
     const initialPositionEncoded = getInitialEncodedPosition(
       room.sport as "nfl" | "mlb" | "nba" | "nhl" | "cfb"
     );
-
-    console.log('[JOIN] Initial position:', { sport: room.sport, position: initialPosition, encoded: initialPositionEncoded });
 
     const { error: memberError } = await supabase.from("room_members").insert({
       room_id: room.id,
@@ -180,14 +150,13 @@ export async function POST(request: Request) {
     });
 
     if (memberError) {
-      console.error("[JOIN] Error inserting member:", memberError);
+      console.error("Error inserting member:", memberError);
       return NextResponse.json(
         { error: "Failed to join room" },
         { status: 500 }
       );
     }
 
-    console.log('[JOIN] ========== JOIN SUCCESS ==========');
     return NextResponse.json({
       room,
       already_member: false,

@@ -16,7 +16,7 @@ export default async function HeaderAuth() {
     const userIsAdmin = isAdmin(user.email);
 
     return (
-      <div className="flex gap-3 items-center">
+      <div className="flex gap-2 sm:gap-3 items-center">
         {userIsAdmin && (
           <Link
             href="/admin"
@@ -29,31 +29,17 @@ export default async function HeaderAuth() {
         )}
         <Link
           href="/profile"
-          className="hidden sm:flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <UserCircleIcon className="w-5 h-5" />
-          <span className="max-w-[120px] truncate">{displayName}</span>
+          <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
         </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          href="/profile"
-          asLink
-          className="sm:hidden"
-        >
-          <UserCircleIcon className="w-5 h-5" />
-        </Button>
-        <form action="/auth/signout" method="post">
-          <Button type="submit" variant="secondary" size="sm">
-            Sign Out
-          </Button>
-        </form>
       </div>
     );
   }
 
   return (
-    <Button variant="primary" size="sm" href="/login" asLink>
+    <Button variant="primary" size="sm" href="/login" asLink className="whitespace-nowrap">
       Sign In
     </Button>
   );

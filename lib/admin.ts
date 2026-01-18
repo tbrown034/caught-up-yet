@@ -1,15 +1,18 @@
 // Admin utility functions
+// Admin emails are configured via ADMIN_EMAILS environment variable
+// Format: comma-separated list (e.g., "admin1@example.com,admin2@example.com")
 
-const ADMIN_EMAILS = [
-  "tbrown034@gmail.com",
-  "trevorbrown.web@gmail.com",
-];
+function getAdminEmails(): string[] {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
+  if (!adminEmailsEnv) return [];
+  return adminEmailsEnv
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 export function isAdmin(email: string | undefined | null): boolean {
   if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
-}
-
-export function getAdminEmails(): string[] {
-  return [...ADMIN_EMAILS];
+  const adminEmails = getAdminEmails();
+  return adminEmails.includes(email.toLowerCase());
 }
