@@ -1,6 +1,7 @@
 import Button from "@/components/ui/Button";
 import { fetchAllSportsGames } from "@/lib/espn-api";
 import AnimatedHero from "@/components/home/AnimatedHero";
+import ClassifiedHero from "@/components/home/ClassifiedHero";
 import HomeGameCard from "@/components/home/HomeGameCard";
 import {
   UserGroupIcon,
@@ -17,6 +18,9 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <AnimatedHero />
+
+      {/* Classified Headlines Section */}
+      <ClassifiedHero games={games} />
 
       {/* How It Works - Simple version */}
       <section className="py-16 bg-white dark:bg-gray-950">
