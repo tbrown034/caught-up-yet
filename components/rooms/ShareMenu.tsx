@@ -40,7 +40,7 @@ export default function ShareMenu({
   };
 
   const handleCopyCode = async () => {
-    await copyToClipboard(shareOptions.shareCode);
+    await copyToClipboard(formatShareCode(shareOptions.shareCode));
     setCopiedItem("code");
     setTimeout(() => setCopiedItem(null), 2000);
   };

@@ -31,10 +31,10 @@ export function isValidShareCode(code: string): boolean {
 }
 
 /**
- * Normalize share code (convert to uppercase, trim)
+ * Normalize share code (convert to uppercase, trim, remove hyphens)
  */
 export function normalizeShareCode(code: string): string {
-  return code.trim().toUpperCase();
+  return code.trim().toUpperCase().replace(/-/g, "");
 }
 
 /**
